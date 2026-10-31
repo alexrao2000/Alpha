@@ -13,3 +13,9 @@ Alpha measures the contribution of individual agent steps to completed work.
 - Use `npm test` and `npm run demo` to verify changes.
 - Never commit credentials, local authentication, or raw provider diagnostics.
 - Stage explicit paths and commit completed work.
+
+<!-- BEGIN AWS Agent Toolkit rules -->
+## AWS Agent Toolkit
+
+For AWS work, read and follow [the new AWS experience rules](docs/aws-starter-rules.md). Use profile `rao` and selected Region `us-east-2`.
+<!-- END AWS Agent Toolkit rules -->
