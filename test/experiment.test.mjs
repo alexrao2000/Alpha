@@ -170,4 +170,3 @@ test('report escapes untrusted strings, including script terminators', () => {
   assert(html.includes('SCRIPTED DEMO'));
   assert(html.includes('Unmeasured'));
 });
-

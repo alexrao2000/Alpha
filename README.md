@@ -26,6 +26,8 @@ node src/cli.mjs experiment --backend codex --limit 2 --trials 1 \
   --variants without-planner,without-policy
 ```
 
+`npm run live` runs a smaller smoke comparison: one discovery case, one holdout case, one trial, and two removal candidates.
+
 Each role is a separate model request with isolated context and structured JSON output. The backend uses an ephemeral, read-only temporary working directory and rejects a trial if the model attempts a shell, web, file-change, or MCP tool action. Only the local host executes the simulated order tools. Nothing connects to a real support or payment account.
 
 CLI options include `--model`, `--limit`, `--trials`, `--variants`, `--concurrency`, and `--out`. Use `node src/cli.mjs help` for details. A full live experiment can make hundreds of requests. Begin with the small command above. Roles within a workflow run sequentially. Use `--concurrency 3` to evaluate independent workflows together; each still has its own state. Trial/variant order rotates to reduce a fixed ordering bias. This does not eliminate service-load or caching effects.
@@ -36,7 +38,7 @@ Live reports record the usage events returned by the CLI. Input tokens include c
 
 The root and five specialists are authored as an [eve project](https://eve.dev/docs/subagents). Prompts live in `agent/subagents/<role>/instructions.md`; each specialist has an `agent.ts` manifest. The local experiment harness reads those same prompts and runs their contracts through the selected backend. **The Codex adapter tests the role prompts and host workflow, not eve's session or delegation runtime.**
 
-After installing framework dependencies, `npm run build` validates the eve project and `npm run dev` opens its interactive runtime. The default eve manifests use an AI Gateway model string; authentication is managed by eve. The benchmark can run without installing eve or configuring a new provider account.
+After installing framework dependencies, `npm run build -- --skip-sandbox-prewarm` validates the eve project without preparing a deployment sandbox and `npm run dev` opens its interactive runtime. The default eve manifests use an AI Gateway model string; authentication is managed by eve. The benchmark can run without installing eve or configuring a new provider account.
 
 The selected role list lives in [fleet.config.json](fleet.config.json). Proposed patches apply to that file, and the CLI reads it on its next experiment. Alpha never applies the proposed patch automatically. It currently proposes role removal only; prompt rewrites, model routing, parallelization, and arbitrary code surgery are outside this prototype.
 
