@@ -4,6 +4,17 @@ Alpha is a local prototype for measuring the value of individual steps in an age
 
 The first fleet handles simulated customer support. Its five roles are **planner → researcher → policy → resolver → reviewer**. Each role has its own prompt and output contract. Research chooses an order to look up; the host executes that tool. The final proposed action changes a fresh local order database. An independent grader checks the resulting state.
 
+## Test an independently built fleet
+
+Alpha now runs the published [CrewAI Game Builder](https://github.com/crewAIInc/crewAI-examples/tree/da94a91e691e1cf5b3151416bb15b5b62729bea8/crews/game-builder-crew) through its native runtime. Its engineer, QA engineer, and chief QA are original upstream roles. Source and prompts remain byte-identical to the pinned revision; no redundant role or defect is planted.
+
+```sh
+npm run setup:external
+npm run external
+```
+
+The experiment compares the original crew with removal of either review role, selects on four discovery games, and tests the fixed candidate on four different holdout games. Generated programs are checked by executable input/output tests. See the [adapter documentation](integrations/crewai-game-builder/README.md) for setup, provenance, model-transport differences, and limits. The original support fleet below remains a scripted development example.
+
 ## Run the prototype
 
 The experiment runner has no third-party dependencies and works with Node.js 20 or newer. The optional eve runtime requires Node.js 24 or newer.

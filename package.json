@@ -12,7 +12,9 @@
     "live": "node src/cli.mjs experiment --backend codex --limit 1 --trials 1 --concurrency 3 --variants without-planner,without-policy",
     "test": "node --test",
     "dev": "eve dev",
-    "build": "eve build"
+    "build": "eve build",
+    "setup:external": "sh scripts/setup-external.sh",
+    "external": "node src/cli.mjs experiment --fleet crewai-game-builder --backend codex --trials 1 --concurrency 4"
   },
   "dependencies": {
     "ai": "^7.0.159",

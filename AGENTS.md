@@ -2,7 +2,8 @@
 
 Alpha measures the contribution of individual agent steps to completed work.
 
-- Keep the fleet in `agent/subagents/`; the experiment runner reads those prompts.
+- Keep the built-in fleet in `agent/subagents/` and native external adapters in `integrations/`.
+- Preserve pinned upstream bytes and verify their hashes before external runs.
 - Keep expected outcomes out of agent messages, role context, and model responses.
 - Execute each task and variant against a fresh copy of its initial world.
 - Reexecute downstream roles after a change. Do not edit recorded traces to score variants.

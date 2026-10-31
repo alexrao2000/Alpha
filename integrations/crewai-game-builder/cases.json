@@ -1,0 +1,2148 @@
+[
+  {
+    "id": "discovery-tictactoe",
+    "split": "discovery",
+    "category": "Tic-tac-toe",
+    "input": {
+      "game": "Build a headless Python game-rules module using only the standard library. Expose solve(request: dict) and return the JSON-compatible value specified below. Do not print, read files, call input(), or start a game on import. request.board is a 3x3 list of strings X, O, or empty string. Return X or O if that player has three in a row, column, or diagonal; otherwise return draw if no empty cells remain, or ongoing. Inputs have at most one winner."
+    },
+    "checks": [
+      {
+        "name": "Tic-tac-toe check 1",
+        "request": {
+          "board": [
+            [
+              "X",
+              "X",
+              "X"
+            ],
+            [
+              "O",
+              "",
+              "O"
+            ],
+            [
+              "",
+              "",
+              ""
+            ]
+          ]
+        },
+        "expected": "X"
+      },
+      {
+        "name": "Tic-tac-toe check 2",
+        "request": {
+          "board": [
+            [
+              "O",
+              "X",
+              ""
+            ],
+            [
+              "O",
+              "X",
+              ""
+            ],
+            [
+              "O",
+              "",
+              "X"
+            ]
+          ]
+        },
+        "expected": "O"
+      },
+      {
+        "name": "Tic-tac-toe check 3",
+        "request": {
+          "board": [
+            [
+              "X",
+              "O",
+              ""
+            ],
+            [
+              "O",
+              "X",
+              ""
+            ],
+            [
+              "",
+              "",
+              "X"
+            ]
+          ]
+        },
+        "expected": "X"
+      },
+      {
+        "name": "Tic-tac-toe check 4",
+        "request": {
+          "board": [
+            [
+              "X",
+              "X",
+              "O"
+            ],
+            [
+              "X",
+              "O",
+              ""
+            ],
+            [
+              "O",
+              "",
+              ""
+            ]
+          ]
+        },
+        "expected": "O"
+      },
+      {
+        "name": "Tic-tac-toe check 5",
+        "request": {
+          "board": [
+            [
+              "X",
+              "O",
+              "X"
+            ],
+            [
+              "X",
+              "O",
+              "O"
+            ],
+            [
+              "O",
+              "X",
+              "X"
+            ]
+          ]
+        },
+        "expected": "draw"
+      },
+      {
+        "name": "Tic-tac-toe check 6",
+        "request": {
+          "board": [
+            [
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              ""
+            ]
+          ]
+        },
+        "expected": "ongoing"
+      },
+      {
+        "name": "Tic-tac-toe check 7",
+        "request": {
+          "board": [
+            [
+              "X",
+              "O",
+              "X"
+            ],
+            [
+              "O",
+              "X",
+              "O"
+            ],
+            [
+              "O",
+              "X",
+              ""
+            ]
+          ]
+        },
+        "expected": "ongoing"
+      },
+      {
+        "name": "Tic-tac-toe check 8",
+        "request": {
+          "board": [
+            [
+              "X",
+              "O",
+              "O"
+            ],
+            [
+              "",
+              "O",
+              "X"
+            ],
+            [
+              "O",
+              "X",
+              "X"
+            ]
+          ]
+        },
+        "expected": "O"
+      }
+    ]
+  },
+  {
+    "id": "discovery-mines",
+    "split": "discovery",
+    "category": "Minesweeper",
+    "input": {
+      "game": "Build a headless Python game-rules module using only the standard library. Expose solve(request: dict) and return the JSON-compatible value specified below. Do not print, read files, call input(), or start a game on import. request.grid is a nonempty rectangular list of lists of integers (1 means mine, 0 means empty). Return a same-size integer grid with -1 for each mine and the number of mines in the eight neighboring cells for each empty cell. Corners do not wrap."
+    },
+    "checks": [
+      {
+        "name": "Minesweeper check 1",
+        "request": {
+          "grid": [
+            [
+              0
+            ]
+          ]
+        },
+        "expected": [
+          [
+            0
+          ]
+        ]
+      },
+      {
+        "name": "Minesweeper check 2",
+        "request": {
+          "grid": [
+            [
+              1
+            ]
+          ]
+        },
+        "expected": [
+          [
+            -1
+          ]
+        ]
+      },
+      {
+        "name": "Minesweeper check 3",
+        "request": {
+          "grid": [
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ]
+          ]
+        },
+        "expected": [
+          [
+            -1,
+            1,
+            0
+          ],
+          [
+            1,
+            2,
+            1
+          ],
+          [
+            0,
+            1,
+            -1
+          ]
+        ]
+      },
+      {
+        "name": "Minesweeper check 4",
+        "request": {
+          "grid": [
+            [
+              1,
+              0,
+              1,
+              0
+            ]
+          ]
+        },
+        "expected": [
+          [
+            -1,
+            2,
+            -1,
+            1
+          ]
+        ]
+      },
+      {
+        "name": "Minesweeper check 5",
+        "request": {
+          "grid": [
+            [
+              1
+            ],
+            [
+              0
+            ],
+            [
+              1
+            ],
+            [
+              0
+            ]
+          ]
+        },
+        "expected": [
+          [
+            -1
+          ],
+          [
+            2
+          ],
+          [
+            -1
+          ],
+          [
+            1
+          ]
+        ]
+      },
+      {
+        "name": "Minesweeper check 6",
+        "request": {
+          "grid": [
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              0
+            ]
+          ]
+        },
+        "expected": [
+          [
+            -1,
+            -1
+          ],
+          [
+            -1,
+            3
+          ]
+        ]
+      },
+      {
+        "name": "Minesweeper check 7",
+        "request": {
+          "grid": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        },
+        "expected": [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ]
+      },
+      {
+        "name": "Minesweeper check 8",
+        "request": {
+          "grid": [
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              1,
+              0,
+              1
+            ]
+          ]
+        },
+        "expected": [
+          [
+            2,
+            -1,
+            2
+          ],
+          [
+            -1,
+            3,
+            -1
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "discovery-mastermind",
+    "split": "discovery",
+    "category": "Mastermind",
+    "input": {
+      "game": "Build a headless Python game-rules module using only the standard library. Expose solve(request: dict) and return the JSON-compatible value specified below. Do not print, read files, call input(), or start a game on import. request.secret and request.guess are equal-length lists of integers. Return {\"exact\": n, \"misplaced\": m}. Exact matches use identical positions. Remove exact matches before counting misplaced matches by multiset intersection, so each secret item is used at most once. Empty lists are valid."
+    },
+    "checks": [
+      {
+        "name": "Mastermind check 1",
+        "request": {
+          "secret": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "guess": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "expected": {
+          "exact": 4,
+          "misplaced": 0
+        }
+      },
+      {
+        "name": "Mastermind check 2",
+        "request": {
+          "secret": [
+            1,
+            1,
+            2,
+            2
+          ],
+          "guess": [
+            2,
+            2,
+            1,
+            1
+          ]
+        },
+        "expected": {
+          "exact": 0,
+          "misplaced": 4
+        }
+      },
+      {
+        "name": "Mastermind check 3",
+        "request": {
+          "secret": [
+            1,
+            1,
+            2,
+            2
+          ],
+          "guess": [
+            1,
+            2,
+            1,
+            3
+          ]
+        },
+        "expected": {
+          "exact": 1,
+          "misplaced": 2
+        }
+      },
+      {
+        "name": "Mastermind check 4",
+        "request": {
+          "secret": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "guess": [
+            5,
+            6,
+            7,
+            8
+          ]
+        },
+        "expected": {
+          "exact": 0,
+          "misplaced": 0
+        }
+      },
+      {
+        "name": "Mastermind check 5",
+        "request": {
+          "secret": [
+            1,
+            1,
+            1,
+            2
+          ],
+          "guess": [
+            1,
+            2,
+            2,
+            2
+          ]
+        },
+        "expected": {
+          "exact": 2,
+          "misplaced": 0
+        }
+      },
+      {
+        "name": "Mastermind check 6",
+        "request": {
+          "secret": [],
+          "guess": []
+        },
+        "expected": {
+          "exact": 0,
+          "misplaced": 0
+        }
+      },
+      {
+        "name": "Mastermind check 7",
+        "request": {
+          "secret": [
+            0,
+            0,
+            1
+          ],
+          "guess": [
+            1,
+            0,
+            0
+          ]
+        },
+        "expected": {
+          "exact": 1,
+          "misplaced": 2
+        }
+      },
+      {
+        "name": "Mastermind check 8",
+        "request": {
+          "secret": [
+            3,
+            2,
+            1
+          ],
+          "guess": [
+            1,
+            3,
+            2
+          ]
+        },
+        "expected": {
+          "exact": 0,
+          "misplaced": 3
+        }
+      }
+    ]
+  },
+  {
+    "id": "discovery-blackjack",
+    "split": "discovery",
+    "category": "Blackjack",
+    "input": {
+      "game": "Build a headless Python game-rules module using only the standard library. Expose solve(request: dict) and return the JSON-compatible value specified below. Do not print, read files, call input(), or start a game on import. request.cards is a list of strings A, 2 through 10, J, Q, K. Each face card is 10. Each ace is 1 or 11. Return the highest possible total <=21, or the minimum total if every total busts. An empty hand is 0."
+    },
+    "checks": [
+      {
+        "name": "Blackjack check 1",
+        "request": {
+          "cards": []
+        },
+        "expected": 0
+      },
+      {
+        "name": "Blackjack check 2",
+        "request": {
+          "cards": [
+            "A"
+          ]
+        },
+        "expected": 11
+      },
+      {
+        "name": "Blackjack check 3",
+        "request": {
+          "cards": [
+            "A",
+            "A"
+          ]
+        },
+        "expected": 12
+      },
+      {
+        "name": "Blackjack check 4",
+        "request": {
+          "cards": [
+            "A",
+            "A",
+            "9"
+          ]
+        },
+        "expected": 21
+      },
+      {
+        "name": "Blackjack check 5",
+        "request": {
+          "cards": [
+            "A",
+            "A",
+            "K"
+          ]
+        },
+        "expected": 12
+      },
+      {
+        "name": "Blackjack check 6",
+        "request": {
+          "cards": [
+            "K",
+            "Q",
+            "2"
+          ]
+        },
+        "expected": 22
+      },
+      {
+        "name": "Blackjack check 7",
+        "request": {
+          "cards": [
+            "A",
+            "A",
+            "A",
+            "8"
+          ]
+        },
+        "expected": 21
+      },
+      {
+        "name": "Blackjack check 8",
+        "request": {
+          "cards": [
+            "A",
+            "K"
+          ]
+        },
+        "expected": 21
+      },
+      {
+        "name": "Blackjack check 9",
+        "request": {
+          "cards": [
+            "9",
+            "8",
+            "7"
+          ]
+        },
+        "expected": 24
+      },
+      {
+        "name": "Blackjack check 10",
+        "request": {
+          "cards": [
+            "A",
+            "5",
+            "5"
+          ]
+        },
+        "expected": 21
+      }
+    ]
+  },
+  {
+    "id": "holdout-connect4",
+    "split": "holdout",
+    "category": "Connect Four",
+    "input": {
+      "game": "Build a headless Python game-rules module using only the standard library. Expose solve(request: dict) and return the JSON-compatible value specified below. Do not print, read files, call input(), or start a game on import. request.board is a 6x7 integer grid; 0 is empty, players are 1 and 2. Return the player with at least four consecutive counters horizontally, vertically, or diagonally; return 0 if none. Inputs have at most one winner. Evaluate the supplied grid directly, including positions not reachable in normal play. Do not wrap rows or columns."
+    },
+    "checks": [
+      {
+        "name": "Connect Four check 1",
+        "request": {
+          "board": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          ]
+        },
+        "expected": 0
+      },
+      {
+        "name": "Connect Four check 2",
+        "request": {
+          "board": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              0,
+              0,
+              0
+            ]
+          ]
+        },
+        "expected": 1
+      },
+      {
+        "name": "Connect Four check 3",
+        "request": {
+          "board": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              2,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              2,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              2,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              2,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          ]
+        },
+        "expected": 2
+      },
+      {
+        "name": "Connect Four check 4",
+        "request": {
+          "board": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          ]
+        },
+        "expected": 1
+      },
+      {
+        "name": "Connect Four check 5",
+        "request": {
+          "board": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              2,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0
+            ]
+          ]
+        },
+        "expected": 2
+      },
+      {
+        "name": "Connect Four check 6",
+        "request": {
+          "board": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              1,
+              1,
+              0,
+              1,
+              1,
+              0,
+              0
+            ]
+          ]
+        },
+        "expected": 0
+      },
+      {
+        "name": "Connect Four check 7",
+        "request": {
+          "board": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          ]
+        },
+        "expected": 2
+      },
+      {
+        "name": "Connect Four check 8",
+        "request": {
+          "board": [
+            [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          ]
+        },
+        "expected": 0
+      }
+    ]
+  },
+  {
+    "id": "holdout-reversi",
+    "split": "holdout",
+    "category": "Reversi",
+    "input": {
+      "game": "Build a headless Python game-rules module using only the standard library. Expose solve(request: dict) and return the JSON-compatible value specified below. Do not print, read files, call input(), or start a game on import. request.board is an 8x8 grid of strings B, W, and dot (empty), and request.player is B or W. Return a row-major sorted list of [row,column] legal moves (zero indexed). A move is legal when an empty square captures one or more adjacent opponent counters, in any of eight directions, followed by a counter of the player. No wrapping."
+    },
+    "checks": [
+      {
+        "name": "Reversi check 1",
+        "request": {
+          "board": [
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              "W",
+              "B",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              "B",
+              "W",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ]
+          ],
+          "player": "B"
+        },
+        "expected": [
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            2
+          ],
+          [
+            4,
+            5
+          ],
+          [
+            5,
+            4
+          ]
+        ]
+      },
+      {
+        "name": "Reversi check 2",
+        "request": {
+          "board": [
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              "W",
+              "B",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              "B",
+              "W",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ]
+          ],
+          "player": "W"
+        },
+        "expected": [
+          [
+            2,
+            4
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            4,
+            2
+          ],
+          [
+            5,
+            3
+          ]
+        ]
+      },
+      {
+        "name": "Reversi check 3",
+        "request": {
+          "board": [
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ]
+          ],
+          "player": "B"
+        },
+        "expected": []
+      },
+      {
+        "name": "Reversi check 4",
+        "request": {
+          "board": [
+            [
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B"
+            ],
+            [
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B"
+            ],
+            [
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B"
+            ],
+            [
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B"
+            ],
+            [
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B"
+            ],
+            [
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B"
+            ],
+            [
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B"
+            ],
+            [
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B",
+              "B"
+            ]
+          ],
+          "player": "W"
+        },
+        "expected": []
+      },
+      {
+        "name": "Reversi check 5",
+        "request": {
+          "board": [
+            [
+              ".",
+              "W",
+              "W",
+              "B",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ]
+          ],
+          "player": "B"
+        },
+        "expected": [
+          [
+            0,
+            0
+          ]
+        ]
+      },
+      {
+        "name": "Reversi check 6",
+        "request": {
+          "board": [
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "W",
+              "B"
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ],
+            [
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "."
+            ]
+          ],
+          "player": "B"
+        },
+        "expected": [
+          [
+            0,
+            5
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "holdout-yahtzee",
+    "split": "holdout",
+    "category": "Yahtzee",
+    "input": {
+      "game": "Build a headless Python game-rules module using only the standard library. Expose solve(request: dict) and return the JSON-compatible value specified below. Do not print, read files, call input(), or start a game on import. request.dice contains five integers 1..6. request.category is full_house (exactly 3 of one face and 2 of a different face: 25 points), yahtzee (five equal:50), small_straight (at least four consecutive distinct faces:30), large_straight (five consecutive distinct faces:40), three_kind or four_kind (at least that many equal: sum of dice), chance (sum), or upper_N (sum of dice showing N). Return an integer score, 0 if the category is not satisfied. Repeated faces do not break a straight formed by other dice."
+    },
+    "checks": [
+      {
+        "name": "Yahtzee check 1",
+        "request": {
+          "dice": [
+            1,
+            1,
+            1,
+            2,
+            2
+          ],
+          "category": "full_house"
+        },
+        "expected": 25
+      },
+      {
+        "name": "Yahtzee check 2",
+        "request": {
+          "dice": [
+            6,
+            6,
+            6,
+            6,
+            6
+          ],
+          "category": "full_house"
+        },
+        "expected": 0
+      },
+      {
+        "name": "Yahtzee check 3",
+        "request": {
+          "dice": [
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "category": "yahtzee"
+        },
+        "expected": 50
+      },
+      {
+        "name": "Yahtzee check 4",
+        "request": {
+          "dice": [
+            1,
+            2,
+            3,
+            4,
+            4
+          ],
+          "category": "small_straight"
+        },
+        "expected": 30
+      },
+      {
+        "name": "Yahtzee check 5",
+        "request": {
+          "dice": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "category": "large_straight"
+        },
+        "expected": 40
+      },
+      {
+        "name": "Yahtzee check 6",
+        "request": {
+          "dice": [
+            1,
+            2,
+            4,
+            5,
+            6
+          ],
+          "category": "small_straight"
+        },
+        "expected": 0
+      },
+      {
+        "name": "Yahtzee check 7",
+        "request": {
+          "dice": [
+            6,
+            6,
+            6,
+            1,
+            2
+          ],
+          "category": "three_kind"
+        },
+        "expected": 21
+      },
+      {
+        "name": "Yahtzee check 8",
+        "request": {
+          "dice": [
+            6,
+            6,
+            6,
+            1,
+            2
+          ],
+          "category": "four_kind"
+        },
+        "expected": 0
+      },
+      {
+        "name": "Yahtzee check 9",
+        "request": {
+          "dice": [
+            2,
+            2,
+            2,
+            2,
+            5
+          ],
+          "category": "four_kind"
+        },
+        "expected": 13
+      },
+      {
+        "name": "Yahtzee check 10",
+        "request": {
+          "dice": [
+            1,
+            2,
+            3,
+            4,
+            6
+          ],
+          "category": "chance"
+        },
+        "expected": 16
+      },
+      {
+        "name": "Yahtzee check 11",
+        "request": {
+          "dice": [
+            1,
+            3,
+            3,
+            3,
+            5
+          ],
+          "category": "upper_3"
+        },
+        "expected": 9
+      },
+      {
+        "name": "Yahtzee check 12",
+        "request": {
+          "dice": [
+            2,
+            2,
+            3,
+            3,
+            4
+          ],
+          "category": "full_house"
+        },
+        "expected": 0
+      },
+      {
+        "name": "Yahtzee check 13",
+        "request": {
+          "dice": [
+            2,
+            3,
+            4,
+            5,
+            5
+          ],
+          "category": "small_straight"
+        },
+        "expected": 30
+      },
+      {
+        "name": "Yahtzee check 14",
+        "request": {
+          "dice": [
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "category": "large_straight"
+        },
+        "expected": 40
+      }
+    ]
+  },
+  {
+    "id": "holdout-nim",
+    "split": "holdout",
+    "category": "Nim",
+    "input": {
+      "game": "Build a headless Python game-rules module using only the standard library. Expose solve(request: dict) and return the JSON-compatible value specified below. Do not print, read files, call input(), or start a game on import. request.heaps is a list of nonnegative integers. Each turn removes one or more counters from exactly one heap. Return a boolean indicating whether the current player has a winning strategy with perfect play. request.misere=false means taking the last counter wins; true means taking the last counter loses. Zero heaps are ignored. For an already empty position, return false in normal play and true in misere play."
+    },
+    "checks": [
+      {
+        "name": "Nim check 1",
+        "request": {
+          "heaps": [],
+          "misere": false
+        },
+        "expected": false
+      },
+      {
+        "name": "Nim check 2",
+        "request": {
+          "heaps": [],
+          "misere": true
+        },
+        "expected": true
+      },
+      {
+        "name": "Nim check 3",
+        "request": {
+          "heaps": [
+            1
+          ],
+          "misere": true
+        },
+        "expected": false
+      },
+      {
+        "name": "Nim check 4",
+        "request": {
+          "heaps": [
+            1,
+            1
+          ],
+          "misere": true
+        },
+        "expected": true
+      },
+      {
+        "name": "Nim check 5",
+        "request": {
+          "heaps": [
+            1,
+            1,
+            1
+          ],
+          "misere": true
+        },
+        "expected": false
+      },
+      {
+        "name": "Nim check 6",
+        "request": {
+          "heaps": [
+            2
+          ],
+          "misere": true
+        },
+        "expected": true
+      },
+      {
+        "name": "Nim check 7",
+        "request": {
+          "heaps": [
+            2,
+            2
+          ],
+          "misere": true
+        },
+        "expected": false
+      },
+      {
+        "name": "Nim check 8",
+        "request": {
+          "heaps": [
+            2,
+            1
+          ],
+          "misere": true
+        },
+        "expected": true
+      },
+      {
+        "name": "Nim check 9",
+        "request": {
+          "heaps": [
+            1,
+            2,
+            3
+          ],
+          "misere": false
+        },
+        "expected": false
+      },
+      {
+        "name": "Nim check 10",
+        "request": {
+          "heaps": [
+            4,
+            1,
+            2
+          ],
+          "misere": false
+        },
+        "expected": true
+      },
+      {
+        "name": "Nim check 11",
+        "request": {
+          "heaps": [
+            0,
+            1,
+            0,
+            1
+          ],
+          "misere": true
+        },
+        "expected": true
+      },
+      {
+        "name": "Nim check 12",
+        "request": {
+          "heaps": [
+            0,
+            0
+          ],
+          "misere": false
+        },
+        "expected": false
+      },
+      {
+        "name": "Nim check 13",
+        "request": {
+          "heaps": [
+            7,
+            7,
+            7
+          ],
+          "misere": false
+        },
+        "expected": true
+      },
+      {
+        "name": "Nim check 14",
+        "request": {
+          "heaps": [
+            3,
+            3,
+            1
+          ],
+          "misere": true
+        },
+        "expected": true
+      }
+    ]
+  }
+]

@@ -93,7 +93,7 @@ export function chooseCandidate(results, variants) {
   })[0] ?? null;
 }
 
-export async function experiment({ cases, backend, prompts, trials = 2, limit, variants = VARIANTS, concurrency = 1, onProgress = () => {}, signal }) {
+export async function experiment({ cases, backend, prompts, trials = 2, limit, variants = VARIANTS, concurrency = 1, runTask = runCase, fleet = null, onProgress = () => {}, onRun = async () => {}, signal }) {
   if (!Number.isInteger(trials) || trials < 1) throw new Error('Trials must be a positive integer.');
   if (limit !== undefined && (!Number.isInteger(limit) || limit < 1)) throw new Error('Limit must be a positive integer.');
   if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 8) throw new Error('Concurrency must be an integer from 1 to 8.');
@@ -116,7 +116,8 @@ export async function experiment({ cases, backend, prompts, trials = 2, limit, v
       while (next < jobs.length) {
         const index = next++, job = jobs[index];
         onProgress(`${phase} · ${job.testCase.id} · ${job.variant.id} · trial ${job.trial + 1}`);
-        completed[index] = await runCase({ ...job, backend, prompts, signal });
+        completed[index] = await runTask({ ...job, backend, prompts, signal });
+        await onRun(completed[index]);
       }
     }));
     runs.push(...completed);
@@ -132,7 +133,8 @@ export async function experiment({ cases, backend, prompts, trials = 2, limit, v
   const validated = Boolean(selected && summarize(baselineHoldout).pass_rate === 1 && !hs.errors && !hs.unsafe && !comparison.regressions.length);
   return { version: 1, id: randomUUID(), created_at: new Date().toISOString(),
     backend: backend.name, model: backend.model, fixture: backend.name === 'fixture', trials, concurrency,
-    dataset: { source: 'Alpha authored support development suite',
+    fleet,
+    dataset: { source: fleet?.dataset_description ?? 'Alpha authored support development suite',
       sha256: createHash('sha256').update(JSON.stringify(cases)).digest('hex'),
       discovery_cases: discovery.length, holdout_cases: holdout.length },
     prompt_sha256: createHash('sha256').update(JSON.stringify(prompts)).digest('hex'),

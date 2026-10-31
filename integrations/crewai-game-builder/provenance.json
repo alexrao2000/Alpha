@@ -1,0 +1,48 @@
+{
+  "repository": "https://github.com/crewAIInc/crewAI-examples",
+  "commit": "da94a91e691e1cf5b3151416bb15b5b62729bea8",
+  "path": "crews/game-builder-crew",
+  "runtime": {
+    "package": "crewai",
+    "version": "0.152.0",
+    "source": "upstream uv.lock"
+  },
+  "files": [
+    {
+      "path": "src/game_builder_crew/__init__.py",
+      "git_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "url": "https://raw.githubusercontent.com/crewAIInc/crewAI-examples/da94a91e691e1cf5b3151416bb15b5b62729bea8/crews/game-builder-crew/src/game_builder_crew/__init__.py"
+    },
+    {
+      "path": "src/game_builder_crew/crew.py",
+      "git_blob_sha": "f00b47630a640ff600552a3f6d571eee31905c60",
+      "url": "https://raw.githubusercontent.com/crewAIInc/crewAI-examples/da94a91e691e1cf5b3151416bb15b5b62729bea8/crews/game-builder-crew/src/game_builder_crew/crew.py"
+    },
+    {
+      "path": "src/game_builder_crew/config/agents.yaml",
+      "git_blob_sha": "65d61cc8d7f5db386aaaca5b3fbf9244e953f51a",
+      "url": "https://raw.githubusercontent.com/crewAIInc/crewAI-examples/da94a91e691e1cf5b3151416bb15b5b62729bea8/crews/game-builder-crew/src/game_builder_crew/config/agents.yaml"
+    },
+    {
+      "path": "src/game_builder_crew/config/tasks.yaml",
+      "git_blob_sha": "b8698322b28ed2b40810b8a02145526b594dda55",
+      "url": "https://raw.githubusercontent.com/crewAIInc/crewAI-examples/da94a91e691e1cf5b3151416bb15b5b62729bea8/crews/game-builder-crew/src/game_builder_crew/config/tasks.yaml"
+    },
+    {
+      "path": "README.md",
+      "git_blob_sha": "8d0c2dd5ebd8c40f4e0d85581393477d3694667c",
+      "url": "https://raw.githubusercontent.com/crewAIInc/crewAI-examples/da94a91e691e1cf5b3151416bb15b5b62729bea8/crews/game-builder-crew/README.md"
+    },
+    {
+      "path": "pyproject.toml",
+      "git_blob_sha": "e39a776eb86edb47a64fbd60bc8c6b5cafd88b5c",
+      "url": "https://raw.githubusercontent.com/crewAIInc/crewAI-examples/da94a91e691e1cf5b3151416bb15b5b62729bea8/crews/game-builder-crew/pyproject.toml"
+    }
+  ],
+  "adaptations": [
+    "Replace the model transport with a recording Codex-backed BaseLLM; retain upstream role prompts, tasks, sequential execution, delegation flags, and native CrewAI runtime.",
+    "Pass headless game specifications through the upstream {game} input.",
+    "Remove existing agent/task pairs for candidate variants; do not add roles or defects.",
+    "Run on Python 3.12 rather than the upstream project's declared Python <3.12 range; framework package supports this interpreter."
+  ]
+}

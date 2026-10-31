@@ -1,0 +1,6 @@
+The upstream files are copied unchanged from crewAIInc/crewAI-examples,
+commit da94a91e691e1cf5b3151416bb15b5b62729bea8, crews/game-builder-crew.
+The upstream README attributes this example to @joaomdmoura and declares it
+released under the MIT License. That revision contains no separate license file.
+The original README and all notices in the selected files are preserved.
+See provenance.json for source URLs, Git blob hashes, and adapter differences.
