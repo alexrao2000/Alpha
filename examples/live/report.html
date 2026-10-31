@@ -1,0 +1,741 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Alpha · Agent experiment</title><style>
+  :root{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#e8edf7;background:#0b101a;font-size:14px}*{box-sizing:border-box}body{margin:0}header{border-bottom:1px solid #263144;padding:21px 5vw;display:flex;justify-content:space-between;align-items:center}.brand{font-size:23px;letter-spacing:-1px;font-weight:750}.brand i{color:#bcf672;font-style:normal;margin-right:12px}.eyebrow{color:#91a0b7;letter-spacing:2px;font-size:10px;font-weight:700}.status{padding:7px 11px;background:#202d24;color:#bcf672;border-radius:5px;font-size:11px}main{max-width:1320px;min-width:0;margin:0 auto;padding:48px 5vw}h1{font-size:clamp(30px,4vw,48px);letter-spacing:-1.8px;line-height:1.14;margin:13px 0 18px;max-width:850px}p{line-height:1.7;color:#abb7ca;max-width:880px}.notice{background:#191f2d;border:1px solid #344058;padding:13px 18px;margin:24px 0;border-radius:8px;color:#b9c5d9;line-height:1.6}.notice b{color:#e5ecf9}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin:25px 0 38px}.metric{border:1px solid #293346;border-radius:9px;padding:20px;background:#101724}.metric span{display:block;font-size:11px;color:#9daac0}.metric strong{display:block;font-size:30px;letter-spacing:-1px;margin:12px 0;color:#e5edf9}.metric small{color:#8796ac;font-size:11px}h2{font-size:19px;letter-spacing:-.4px;margin:34px 0 14px}.pipeline{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border:1px solid #293346;padding:21px;border-radius:9px;background:#101724}.node{padding:12px 17px;border:1px solid #49603b;border-radius:6px;color:#c9efa3;background:#17251b}.node.removed{color:#748197;background:#121824;border:1px dashed #46516b;text-decoration:line-through}.arrow{color:#64738d}.caption{font-size:12px;color:#8999b3;margin:12px 0 24px}.table-wrap{overflow-x:auto;border:1px solid #293346;border-radius:9px}table{width:100%;border-collapse:collapse;background:#101724;text-align:left;white-space:nowrap}th{font-size:10px;letter-spacing:.9px;color:#879ab8;background:#141d2e;padding:16px}td{padding:17px 16px;border-top:1px solid #242e41;font-size:12px}tr.selected{background:#18271e}td strong{font-size:13px}.tag{font-size:8px;letter-spacing:.8px;color:#bcf672;border:1px solid #526b3b;padding:4px 6px;border-radius:4px;margin-left:10px}.bad{color:#ff9d9d!important}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card{min-width:0;border:1px solid #293346;border-radius:9px;padding:22px;background:#101724}.card h3{font-size:14px;margin:0 0 10px}.card p{font-size:12px;margin:0}.card pre{font-size:12px;color:#c5e9a1;white-space:pre-wrap}.toolbar{display:flex;gap:12px;margin:18px 0}select{background:#141e2e;color:#d3deef;border:1px solid #34425a;border-radius:5px;padding:9px;font:inherit;font-size:12px}details{border:1px solid #273348;background:#101724;border-radius:7px;margin:8px 0}summary{display:flex;align-items:center;gap:12px;padding:15px;cursor:pointer;font-size:12px}summary strong{min-width:115px}summary b{margin-left:auto;font-size:10px}.category{color:#8798b3}.dot{width:6px;height:6px;border-radius:100%;flex-shrink:0}.pass{background:#bcf672}.fail{background:#ff9090}.trace-body{border-top:1px solid #273348;padding:16px}.checks{display:flex;gap:14px;flex-wrap:wrap;color:#bbd9a1;font-size:11px;padding-bottom:14px}.step{border-top:1px solid #263044;padding:10px 0}.step h4{text-transform:capitalize;font-size:13px}.step small{font-weight:400;color:#8596b0;margin-left:10px}.step-columns{display:grid;grid-template-columns:1fr 1fr;gap:16px}label{font-size:9px;letter-spacing:1px;color:#8193af}pre{font:11px/1.6 ui-monospace,SFMono-Regular,monospace;overflow:auto;max-height:330px;color:#b2c5dd}footer{font-size:10px;color:#71829d;line-height:1.8;overflow-wrap:anywhere;margin:36px 0}button{background:#bcf672;border:0;border-radius:5px;padding:10px 15px;font-weight:650;color:#182210;cursor:pointer}.hidden{display:none}@media(max-width:740px){header .eyebrow{display:none}.metric strong{font-size:23px}.metrics{grid-template-columns:1fr 1fr}.two-col,.step-columns{grid-template-columns:1fr}.category{display:none}summary{gap:8px;font-size:10px}summary strong{min-width:95px}main{padding-top:30px}.toolbar{flex-wrap:wrap}}
+  </style></head><body><header><div class="brand"><i>α</i>Alpha</div><span class="eyebrow">AGENT EXPERIMENT LAB</span><span class="status">LIVE MODEL RUN</span></header><main><div class="eyebrow">EXPERIMENT / 09e32892</div><h1>A smaller fleet.
+Measured against the same work.</h1><p>Run the full fleet, remove one role at a time, and reexecute the remaining workflow. Select on discovery cases, then check the frozen candidate on separate holdout cases.</p>
+  <div class="notice"><b>Live model requests.</b> Each role ran through the existing Codex CLI login with isolated context. Reported tokens come from CLI usage events; wall time includes CLI startup. This small authored suite does not establish production equivalence.</div>
+  <div class="metrics"><div class="metric"><span>HOLDOUT · without-planner</span><strong>1/1</strong><small>1 cases × 1 trials; baseline 1/1</small></div><div class="metric"><span>FEWER ROLE INVOCATIONS</span><strong>20.0%</strong><small>Paired holdout workloads only</small></div><div class="metric"><span>REPORTED TOKEN REDUCTION</span><strong>14.6%</strong><small>Includes cached input; not billed dollars</small></div><div class="metric"><span>HOLDOUT REGRESSIONS</span><strong>0</strong><small>0 unsafe outcomes · 0 execution errors</small></div></div>
+  <h2>Frozen candidate</h2><div class="pipeline"><div class="node removed">planner</div><span class="arrow">→</span><div class="node ">researcher</div><span class="arrow">→</span><div class="node ">policy</div><span class="arrow">→</span><div class="node ">resolver</div><span class="arrow">→</span><div class="node ">reviewer</div></div><div class="caption">No observed regression on this holdout. Review the evidence before applying the proposed change. Same inputs and fresh state per variant. No recorded answers reused.</div>
+  <h2>Discovery experiments</h2><div class="table-wrap"><table><thead><tr><th>WORKFLOW</th><th>PASSED</th><th>ROLE CALLS</th><th>MODEL TOKENS</th><th>REGRESSIONS</th><th>UNSAFE</th></tr></thead><tbody><tr class=""><td><strong>Full fleet</strong></td><td>1/1</td><td>5</td><td>82,798</td><td class="">0</td><td class="">0</td></tr><tr class="selected"><td><strong>Remove planner</strong><span class="tag">SELECTED</span></td><td>1/1</td><td>4</td><td>71,487</td><td class="">0</td><td class="">0</td></tr><tr class=""><td><strong>Remove policy</strong></td><td>0/1</td><td>4</td><td>67,512</td><td class="bad">1</td><td class="">0</td></tr></tbody></table></div><p class="caption">The discovery winner minimizes observed tokens per successful task (role calls in fixture mode), among candidates with no paired regression or unsafe outcome. Holdout results never influence selection.</p>
+  <div class="two-col"><div class="card"><h3>Reviewable configuration change</h3><p>This patch changes the role list for this development fleet. It is a proposal; no configuration was applied.</p><pre>--- fleet.config.json
++++ fleet.config.json
+- [&quot;planner&quot;,&quot;researcher&quot;,&quot;policy&quot;,&quot;resolver&quot;,&quot;reviewer&quot;]
++ [&quot;researcher&quot;,&quot;policy&quot;,&quot;resolver&quot;,&quot;reviewer&quot;]</pre><button id="download">Download experiment JSON</button></div><div class="card"><h3>What the grader checks</h3><p>Actual disposition, ticket state, refund amount and count, refund target, and order state. Expected answers are held outside role context. Policy failures remain visible because the simulated action tool does not repair them.</p><p style="margin-top:12px">The suite is authored alongside this prototype. Its holdout varies values and wording within the same scenario families. Small samples and related cases limit generalization.</p></div></div>
+  <h2>Inspect the evidence</h2><div class="toolbar"><select id="phase" aria-label="Dataset phase"><option value="all">All phases</option><option value="discovery">Discovery</option><option value="holdout" selected>Holdout</option></select><select id="variant" aria-label="Workflow variant"><option value="all">All workflows</option><option value="baseline">Full fleet</option><option value="without-planner">Remove planner</option><option value="without-policy">Remove policy</option></select><select id="outcome" aria-label="Outcome"><option value="all">All outcomes</option><option value="failed">Failures only</option></select></div><div id="traces"><details data-split="discovery" data-variant="baseline" data-failed="false"><summary><span class="dot pass"></span><strong>discovery-01</strong><span>baseline</span><span class="category">standard-refund · trial 1</span><b>PASS</b></summary><div class="trace-body"><div class="checks"><span class="">✓ Disposition</span><span class="">✓ Ticket state</span><span class="">✓ Refund amount</span><span class="">✓ Refund count</span><span class="">✓ Order state</span><span class="">✓ Refund target</span></div><div class="step"><h4>planner <small>55,229 ms · 18,815 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-d-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5000,
+    &quot;message&quot;: &quot;Please refund my order order-d-01 for 5000 cents.&quot;
+  }
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;steps&quot;: [
+    &quot;Look up order order-d-01 and verify its association with customer-1, payment details, and refund history.&quot;,
+    &quot;Check refund eligibility and whether the requested 5000 cents is within the refundable balance and applicable policy.&quot;,
+    &quot;If eligible and authorized, submit a 5000-cent refund through the approved process; otherwise explain the outcome or escalate for review.&quot;,
+    &quot;Review the resolution for accuracy, record the outcome, and communicate the refund status and any next steps to the customer.&quot;
+  ]
+}</pre></div></div></div><div class="step"><h4>researcher <small>52,539 ms · 18,482 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-d-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5000,
+    &quot;message&quot;: &quot;Please refund my order order-d-01 for 5000 cents.&quot;
+  }
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;order_id&quot;: &quot;order-d-01&quot;
+}</pre></div></div></div><div class="step"><h4>policy <small>38,306 ms · 15,137 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-d-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5000,
+    &quot;message&quot;: &quot;Please refund my order order-d-01 for 5000 cents.&quot;
+  },
+  &quot;order&quot;: {
+    &quot;id&quot;: &quot;order-d-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;status&quot;: &quot;delivered&quot;,
+    &quot;age_days&quot;: 10,
+    &quot;paid_cents&quot;: 10000,
+    &quot;refunded_cents&quot;: 0,
+    &quot;risk_flag&quot;: false
+  }
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;disposition&quot;: &quot;refund&quot;,
+  &quot;max_refund_cents&quot;: 10000,
+  &quot;reason&quot;: &quot;Delivered order is within 30 days, customer matches, no risk flag, and 10000 cents remain refundable. The requested 5000 cents is eligible.&quot;
+}</pre></div></div></div><div class="step"><h4>resolver <small>37,606 ms · 15,223 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-d-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5000,
+    &quot;message&quot;: &quot;Please refund my order order-d-01 for 5000 cents.&quot;
+  },
+  &quot;plan&quot;: {
+    &quot;steps&quot;: [
+      &quot;Look up order order-d-01 and verify its association with customer-1, payment details, and refund history.&quot;,
+      &quot;Check refund eligibility and whether the requested 5000 cents is within the refundable balance and applicable policy.&quot;,
+      &quot;If eligible and authorized, submit a 5000-cent refund through the approved process; otherwise explain the outcome or escalate for review.&quot;,
+      &quot;Review the resolution for accuracy, record the outcome, and communicate the refund status and any next steps to the customer.&quot;
+    ]
+  },
+  &quot;order&quot;: {
+    &quot;id&quot;: &quot;order-d-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;status&quot;: &quot;delivered&quot;,
+    &quot;age_days&quot;: 10,
+    &quot;paid_cents&quot;: 10000,
+    &quot;refunded_cents&quot;: 0,
+    &quot;risk_flag&quot;: false
+  },
+  &quot;policy&quot;: {
+    &quot;disposition&quot;: &quot;refund&quot;,
+    &quot;max_refund_cents&quot;: 10000,
+    &quot;reason&quot;: &quot;Delivered order is within 30 days, customer matches, no risk flag, and 10000 cents remain refundable. The requested 5000 cents is eligible.&quot;
+  }
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;action&quot;: &quot;refund&quot;,
+  &quot;amount_cents&quot;: 5000,
+  &quot;reason&quot;: &quot;Delivered order is within 30 days, customer matches, no risk flag, and 10000 cents remain refundable. The requested 5000 cents is eligible.&quot;
+}</pre></div></div></div><div class="step"><h4>reviewer <small>35,216 ms · 15,141 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-d-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5000,
+    &quot;message&quot;: &quot;Please refund my order order-d-01 for 5000 cents.&quot;
+  },
+  &quot;order&quot;: {
+    &quot;id&quot;: &quot;order-d-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;status&quot;: &quot;delivered&quot;,
+    &quot;age_days&quot;: 10,
+    &quot;paid_cents&quot;: 10000,
+    &quot;refunded_cents&quot;: 0,
+    &quot;risk_flag&quot;: false
+  },
+  &quot;proposal&quot;: {
+    &quot;action&quot;: &quot;refund&quot;,
+    &quot;amount_cents&quot;: 5000,
+    &quot;reason&quot;: &quot;Delivered order is within 30 days, customer matches, no risk flag, and 10000 cents remain refundable. The requested 5000 cents is eligible.&quot;
+  }
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;action&quot;: &quot;refund&quot;,
+  &quot;amount_cents&quot;: 5000,
+  &quot;reason&quot;: &quot;The proposed 5000 cents is arithmetically correct: min(5000, max(0, 10000 - 0)) = 5000. Refund disposition preserved.&quot;
+}</pre></div></div></div><div class="step"><h4>Tools and resulting state</h4><pre>{
+  &quot;tools&quot;: [
+    {
+      &quot;tool&quot;: &quot;lookup_order&quot;,
+      &quot;arguments&quot;: {
+        &quot;order_id&quot;: &quot;order-d-01&quot;
+      },
+      &quot;result&quot;: {
+        &quot;id&quot;: &quot;order-d-01&quot;,
+        &quot;customer_id&quot;: &quot;customer-1&quot;,
+        &quot;status&quot;: &quot;delivered&quot;,
+        &quot;age_days&quot;: 10,
+        &quot;paid_cents&quot;: 10000,
+        &quot;refunded_cents&quot;: 0,
+        &quot;risk_flag&quot;: false
+      }
+    },
+    {
+      &quot;tool&quot;: &quot;apply_resolution&quot;,
+      &quot;arguments&quot;: {
+        &quot;action&quot;: &quot;refund&quot;,
+        &quot;amount_cents&quot;: 5000,
+        &quot;reason&quot;: &quot;The proposed 5000 cents is arithmetically correct: min(5000, max(0, 10000 - 0)) = 5000. Refund disposition preserved.&quot;
+      },
+      &quot;result&quot;: {
+        &quot;action&quot;: &quot;refund&quot;,
+        &quot;status&quot;: &quot;resolved&quot;
+      }
+    }
+  ],
+  &quot;state&quot;: {
+    &quot;orders&quot;: [
+      {
+        &quot;id&quot;: &quot;order-d-01&quot;,
+        &quot;customer_id&quot;: &quot;customer-1&quot;,
+        &quot;status&quot;: &quot;delivered&quot;,
+        &quot;age_days&quot;: 10,
+        &quot;paid_cents&quot;: 10000,
+        &quot;refunded_cents&quot;: 0,
+        &quot;risk_flag&quot;: false
+      }
+    ],
+    &quot;refunds&quot;: [
+      {
+        &quot;order_id&quot;: &quot;order-d-01&quot;,
+        &quot;amount_cents&quot;: 5000
+      }
+    ],
+    &quot;ticket&quot;: {
+      &quot;action&quot;: &quot;refund&quot;,
+      &quot;status&quot;: &quot;resolved&quot;
+    }
+  }
+}</pre></div></div></details><details data-split="discovery" data-variant="without-planner" data-failed="false"><summary><span class="dot pass"></span><strong>discovery-01</strong><span>without-planner</span><span class="category">standard-refund · trial 1</span><b>PASS</b></summary><div class="trace-body"><div class="checks"><span class="">✓ Disposition</span><span class="">✓ Ticket state</span><span class="">✓ Refund amount</span><span class="">✓ Refund count</span><span class="">✓ Order state</span><span class="">✓ Refund target</span></div><div class="step"><h4>researcher <small>53,564 ms · 18,729 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-d-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5000,
+    &quot;message&quot;: &quot;Please refund my order order-d-01 for 5000 cents.&quot;
+  }
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;order_id&quot;: &quot;order-d-01&quot;
+}</pre></div></div></div><div class="step"><h4>policy <small>52,312 ms · 18,945 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-d-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5000,
+    &quot;message&quot;: &quot;Please refund my order order-d-01 for 5000 cents.&quot;
+  },
+  &quot;order&quot;: {
+    &quot;id&quot;: &quot;order-d-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;status&quot;: &quot;delivered&quot;,
+    &quot;age_days&quot;: 10,
+    &quot;paid_cents&quot;: 10000,
+    &quot;refunded_cents&quot;: 0,
+    &quot;risk_flag&quot;: false
+  }
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;disposition&quot;: &quot;refund&quot;,
+  &quot;max_refund_cents&quot;: 10000,
+  &quot;reason&quot;: &quot;Delivered order is within 30 days and has 10000 cents remaining; the requested 5000-cent refund is eligible.&quot;
+}</pre></div></div></div><div class="step"><h4>resolver <small>53,460 ms · 18,687 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-d-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5000,
+    &quot;message&quot;: &quot;Please refund my order order-d-01 for 5000 cents.&quot;
+  },
+  &quot;plan&quot;: null,
+  &quot;order&quot;: {
+    &quot;id&quot;: &quot;order-d-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;status&quot;: &quot;delivered&quot;,
+    &quot;age_days&quot;: 10,
+    &quot;paid_cents&quot;: 10000,
+    &quot;refunded_cents&quot;: 0,
+    &quot;risk_flag&quot;: false
+  },
+  &quot;policy&quot;: {
+    &quot;disposition&quot;: &quot;refund&quot;,
+    &quot;max_refund_cents&quot;: 10000,
+    &quot;reason&quot;: &quot;Delivered order is within 30 days and has 10000 cents remaining; the requested 5000-cent refund is eligible.&quot;
+  }
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;action&quot;: &quot;refund&quot;,
+  &quot;amount_cents&quot;: 5000,
+  &quot;reason&quot;: &quot;Delivered order is within 30 days and has 10000 cents remaining; the requested 5000-cent refund is eligible.&quot;
+}</pre></div></div></div><div class="step"><h4>reviewer <small>35,907 ms · 15,126 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-d-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5000,
+    &quot;message&quot;: &quot;Please refund my order order-d-01 for 5000 cents.&quot;
+  },
+  &quot;order&quot;: {
+    &quot;id&quot;: &quot;order-d-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;status&quot;: &quot;delivered&quot;,
+    &quot;age_days&quot;: 10,
+    &quot;paid_cents&quot;: 10000,
+    &quot;refunded_cents&quot;: 0,
+    &quot;risk_flag&quot;: false
+  },
+  &quot;proposal&quot;: {
+    &quot;action&quot;: &quot;refund&quot;,
+    &quot;amount_cents&quot;: 5000,
+    &quot;reason&quot;: &quot;Delivered order is within 30 days and has 10000 cents remaining; the requested 5000-cent refund is eligible.&quot;
+  }
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;action&quot;: &quot;refund&quot;,
+  &quot;amount_cents&quot;: 5000,
+  &quot;reason&quot;: &quot;The proposed 5000-cent refund is arithmetically correct: min(5000, max(0, 10000-0)) = 5000.&quot;
+}</pre></div></div></div><div class="step"><h4>Tools and resulting state</h4><pre>{
+  &quot;tools&quot;: [
+    {
+      &quot;tool&quot;: &quot;lookup_order&quot;,
+      &quot;arguments&quot;: {
+        &quot;order_id&quot;: &quot;order-d-01&quot;
+      },
+      &quot;result&quot;: {
+        &quot;id&quot;: &quot;order-d-01&quot;,
+        &quot;customer_id&quot;: &quot;customer-1&quot;,
+        &quot;status&quot;: &quot;delivered&quot;,
+        &quot;age_days&quot;: 10,
+        &quot;paid_cents&quot;: 10000,
+        &quot;refunded_cents&quot;: 0,
+        &quot;risk_flag&quot;: false
+      }
+    },
+    {
+      &quot;tool&quot;: &quot;apply_resolution&quot;,
+      &quot;arguments&quot;: {
+        &quot;action&quot;: &quot;refund&quot;,
+        &quot;amount_cents&quot;: 5000,
+        &quot;reason&quot;: &quot;The proposed 5000-cent refund is arithmetically correct: min(5000, max(0, 10000-0)) = 5000.&quot;
+      },
+      &quot;result&quot;: {
+        &quot;action&quot;: &quot;refund&quot;,
+        &quot;status&quot;: &quot;resolved&quot;
+      }
+    }
+  ],
+  &quot;state&quot;: {
+    &quot;orders&quot;: [
+      {
+        &quot;id&quot;: &quot;order-d-01&quot;,
+        &quot;customer_id&quot;: &quot;customer-1&quot;,
+        &quot;status&quot;: &quot;delivered&quot;,
+        &quot;age_days&quot;: 10,
+        &quot;paid_cents&quot;: 10000,
+        &quot;refunded_cents&quot;: 0,
+        &quot;risk_flag&quot;: false
+      }
+    ],
+    &quot;refunds&quot;: [
+      {
+        &quot;order_id&quot;: &quot;order-d-01&quot;,
+        &quot;amount_cents&quot;: 5000
+      }
+    ],
+    &quot;ticket&quot;: {
+      &quot;action&quot;: &quot;refund&quot;,
+      &quot;status&quot;: &quot;resolved&quot;
+    }
+  }
+}</pre></div></div></details><details data-split="discovery" data-variant="without-policy" data-failed="true"><summary><span class="dot fail"></span><strong>discovery-01</strong><span>without-policy</span><span class="category">standard-refund · trial 1</span><b>FAIL</b></summary><div class="trace-body"><div class="checks"><span class="bad">× Disposition</span><span class="bad">× Ticket state</span><span class="bad">× Refund amount</span><span class="bad">× Refund count</span><span class="">✓ Order state</span><span class="">✓ Refund target</span></div><div class="step"><h4>planner <small>55,792 ms · 18,552 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-d-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5000,
+    &quot;message&quot;: &quot;Please refund my order order-d-01 for 5000 cents.&quot;
+  }
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;steps&quot;: [
+    &quot;Look up order order-d-01 and verify its association with customer-1, payment details, and prior refunds.&quot;,
+    &quot;Assess refund eligibility under the applicable policy for the requested 5000 cents.&quot;,
+    &quot;If eligible, submit the authorized refund through the appropriate process; otherwise, explain the outcome and available alternatives.&quot;,
+    &quot;Review the resolution for accuracy, record the outcome, and notify the customer.&quot;
+  ]
+}</pre></div></div></div><div class="step"><h4>researcher <small>52,094 ms · 18,729 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-d-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5000,
+    &quot;message&quot;: &quot;Please refund my order order-d-01 for 5000 cents.&quot;
+  }
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;order_id&quot;: &quot;order-d-01&quot;
+}</pre></div></div></div><div class="step"><h4>resolver <small>38,160 ms · 15,137 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-d-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5000,
+    &quot;message&quot;: &quot;Please refund my order order-d-01 for 5000 cents.&quot;
+  },
+  &quot;plan&quot;: {
+    &quot;steps&quot;: [
+      &quot;Look up order order-d-01 and verify its association with customer-1, payment details, and prior refunds.&quot;,
+      &quot;Assess refund eligibility under the applicable policy for the requested 5000 cents.&quot;,
+      &quot;If eligible, submit the authorized refund through the appropriate process; otherwise, explain the outcome and available alternatives.&quot;,
+      &quot;Review the resolution for accuracy, record the outcome, and notify the customer.&quot;
+    ]
+  },
+  &quot;order&quot;: {
+    &quot;id&quot;: &quot;order-d-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;status&quot;: &quot;delivered&quot;,
+    &quot;age_days&quot;: 10,
+    &quot;paid_cents&quot;: 10000,
+    &quot;refunded_cents&quot;: 0,
+    &quot;risk_flag&quot;: false
+  },
+  &quot;policy&quot;: null
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;action&quot;: &quot;escalate&quot;,
+  &quot;amount_cents&quot;: 0,
+  &quot;reason&quot;: &quot;Policy is absent; escalate for review.&quot;
+}</pre></div></div></div><div class="step"><h4>reviewer <small>37,591 ms · 15,094 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-d-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5000,
+    &quot;message&quot;: &quot;Please refund my order order-d-01 for 5000 cents.&quot;
+  },
+  &quot;order&quot;: {
+    &quot;id&quot;: &quot;order-d-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;status&quot;: &quot;delivered&quot;,
+    &quot;age_days&quot;: 10,
+    &quot;paid_cents&quot;: 10000,
+    &quot;refunded_cents&quot;: 0,
+    &quot;risk_flag&quot;: false
+  },
+  &quot;proposal&quot;: {
+    &quot;action&quot;: &quot;escalate&quot;,
+    &quot;amount_cents&quot;: 0,
+    &quot;reason&quot;: &quot;Policy is absent; escalate for review.&quot;
+  }
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;action&quot;: &quot;escalate&quot;,
+  &quot;amount_cents&quot;: 0,
+  &quot;reason&quot;: &quot;Preserved the proposed escalation; non-refund actions require amount_cents=0.&quot;
+}</pre></div></div></div><div class="step"><h4>Tools and resulting state</h4><pre>{
+  &quot;tools&quot;: [
+    {
+      &quot;tool&quot;: &quot;lookup_order&quot;,
+      &quot;arguments&quot;: {
+        &quot;order_id&quot;: &quot;order-d-01&quot;
+      },
+      &quot;result&quot;: {
+        &quot;id&quot;: &quot;order-d-01&quot;,
+        &quot;customer_id&quot;: &quot;customer-1&quot;,
+        &quot;status&quot;: &quot;delivered&quot;,
+        &quot;age_days&quot;: 10,
+        &quot;paid_cents&quot;: 10000,
+        &quot;refunded_cents&quot;: 0,
+        &quot;risk_flag&quot;: false
+      }
+    },
+    {
+      &quot;tool&quot;: &quot;apply_resolution&quot;,
+      &quot;arguments&quot;: {
+        &quot;action&quot;: &quot;escalate&quot;,
+        &quot;amount_cents&quot;: 0,
+        &quot;reason&quot;: &quot;Preserved the proposed escalation; non-refund actions require amount_cents=0.&quot;
+      },
+      &quot;result&quot;: {
+        &quot;action&quot;: &quot;escalate&quot;,
+        &quot;status&quot;: &quot;escalated&quot;
+      }
+    }
+  ],
+  &quot;state&quot;: {
+    &quot;orders&quot;: [
+      {
+        &quot;id&quot;: &quot;order-d-01&quot;,
+        &quot;customer_id&quot;: &quot;customer-1&quot;,
+        &quot;status&quot;: &quot;delivered&quot;,
+        &quot;age_days&quot;: 10,
+        &quot;paid_cents&quot;: 10000,
+        &quot;refunded_cents&quot;: 0,
+        &quot;risk_flag&quot;: false
+      }
+    ],
+    &quot;refunds&quot;: [],
+    &quot;ticket&quot;: {
+      &quot;action&quot;: &quot;escalate&quot;,
+      &quot;status&quot;: &quot;escalated&quot;
+    }
+  }
+}</pre></div></div></details><details data-split="holdout" data-variant="baseline" data-failed="false"><summary><span class="dot pass"></span><strong>holdout-01</strong><span>baseline</span><span class="category">standard-refund · trial 1</span><b>PASS</b></summary><div class="trace-body"><div class="checks"><span class="">✓ Disposition</span><span class="">✓ Ticket state</span><span class="">✓ Refund amount</span><span class="">✓ Refund count</span><span class="">✓ Order state</span><span class="">✓ Refund target</span></div><div class="step"><h4>planner <small>36,467 ms · 14,988 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-h-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5137,
+    &quot;message&quot;: &quot;I need help with order-h-01. Could you send the requested amount back to my original payment method?&quot;
+  }
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;steps&quot;: [
+    &quot;Look up order-h-01 for customer-1 and verify its payment and refund history.&quot;,
+    &quot;Check eligibility for a 5,137-cent refund under the applicable refund policy and available refundable balance.&quot;,
+    &quot;If eligible, submit the refund to the original payment method through the authorized process.&quot;,
+    &quot;Review the refund result, amount, and destination, and communicate the outcome to the customer.&quot;
+  ]
+}</pre></div></div></div><div class="step"><h4>researcher <small>39,314 ms · 18,586 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-h-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5137,
+    &quot;message&quot;: &quot;I need help with order-h-01. Could you send the requested amount back to my original payment method?&quot;
+  }
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;order_id&quot;: &quot;order-h-01&quot;
+}</pre></div></div></div><div class="step"><h4>policy <small>49,488 ms · 15,288 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-h-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5137,
+    &quot;message&quot;: &quot;I need help with order-h-01. Could you send the requested amount back to my original payment method?&quot;
+  },
+  &quot;order&quot;: {
+    &quot;id&quot;: &quot;order-h-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;status&quot;: &quot;delivered&quot;,
+    &quot;age_days&quot;: 10,
+    &quot;paid_cents&quot;: 10137,
+    &quot;refunded_cents&quot;: 0,
+    &quot;risk_flag&quot;: false
+  }
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;disposition&quot;: &quot;refund&quot;,
+  &quot;max_refund_cents&quot;: 10137,
+  &quot;reason&quot;: &quot;Delivered order is within 30 days and has 10137 cents remaining; the requested 5137 cents is eligible.&quot;
+}</pre></div></div></div><div class="step"><h4>resolver <small>33,759 ms · 15,197 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-h-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5137,
+    &quot;message&quot;: &quot;I need help with order-h-01. Could you send the requested amount back to my original payment method?&quot;
+  },
+  &quot;plan&quot;: {
+    &quot;steps&quot;: [
+      &quot;Look up order-h-01 for customer-1 and verify its payment and refund history.&quot;,
+      &quot;Check eligibility for a 5,137-cent refund under the applicable refund policy and available refundable balance.&quot;,
+      &quot;If eligible, submit the refund to the original payment method through the authorized process.&quot;,
+      &quot;Review the refund result, amount, and destination, and communicate the outcome to the customer.&quot;
+    ]
+  },
+  &quot;order&quot;: {
+    &quot;id&quot;: &quot;order-h-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;status&quot;: &quot;delivered&quot;,
+    &quot;age_days&quot;: 10,
+    &quot;paid_cents&quot;: 10137,
+    &quot;refunded_cents&quot;: 0,
+    &quot;risk_flag&quot;: false
+  },
+  &quot;policy&quot;: {
+    &quot;disposition&quot;: &quot;refund&quot;,
+    &quot;max_refund_cents&quot;: 10137,
+    &quot;reason&quot;: &quot;Delivered order is within 30 days and has 10137 cents remaining; the requested 5137 cents is eligible.&quot;
+  }
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;action&quot;: &quot;refund&quot;,
+  &quot;amount_cents&quot;: 5137,
+  &quot;reason&quot;: &quot;Delivered order is within 30 days and has 10137 cents remaining; the requested 5137 cents is eligible.&quot;
+}</pre></div></div></div><div class="step"><h4>reviewer <small>34,595 ms · 15,128 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-h-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5137,
+    &quot;message&quot;: &quot;I need help with order-h-01. Could you send the requested amount back to my original payment method?&quot;
+  },
+  &quot;order&quot;: {
+    &quot;id&quot;: &quot;order-h-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;status&quot;: &quot;delivered&quot;,
+    &quot;age_days&quot;: 10,
+    &quot;paid_cents&quot;: 10137,
+    &quot;refunded_cents&quot;: 0,
+    &quot;risk_flag&quot;: false
+  },
+  &quot;proposal&quot;: {
+    &quot;action&quot;: &quot;refund&quot;,
+    &quot;amount_cents&quot;: 5137,
+    &quot;reason&quot;: &quot;Delivered order is within 30 days and has 10137 cents remaining; the requested 5137 cents is eligible.&quot;
+  }
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;action&quot;: &quot;refund&quot;,
+  &quot;amount_cents&quot;: 5137,
+  &quot;reason&quot;: &quot;The proposed 5137 cents is arithmetically correct and does not exceed the requested amount or the 10137 cents remaining.&quot;
+}</pre></div></div></div><div class="step"><h4>Tools and resulting state</h4><pre>{
+  &quot;tools&quot;: [
+    {
+      &quot;tool&quot;: &quot;lookup_order&quot;,
+      &quot;arguments&quot;: {
+        &quot;order_id&quot;: &quot;order-h-01&quot;
+      },
+      &quot;result&quot;: {
+        &quot;id&quot;: &quot;order-h-01&quot;,
+        &quot;customer_id&quot;: &quot;customer-1&quot;,
+        &quot;status&quot;: &quot;delivered&quot;,
+        &quot;age_days&quot;: 10,
+        &quot;paid_cents&quot;: 10137,
+        &quot;refunded_cents&quot;: 0,
+        &quot;risk_flag&quot;: false
+      }
+    },
+    {
+      &quot;tool&quot;: &quot;apply_resolution&quot;,
+      &quot;arguments&quot;: {
+        &quot;action&quot;: &quot;refund&quot;,
+        &quot;amount_cents&quot;: 5137,
+        &quot;reason&quot;: &quot;The proposed 5137 cents is arithmetically correct and does not exceed the requested amount or the 10137 cents remaining.&quot;
+      },
+      &quot;result&quot;: {
+        &quot;action&quot;: &quot;refund&quot;,
+        &quot;status&quot;: &quot;resolved&quot;
+      }
+    }
+  ],
+  &quot;state&quot;: {
+    &quot;orders&quot;: [
+      {
+        &quot;id&quot;: &quot;order-h-01&quot;,
+        &quot;customer_id&quot;: &quot;customer-1&quot;,
+        &quot;status&quot;: &quot;delivered&quot;,
+        &quot;age_days&quot;: 10,
+        &quot;paid_cents&quot;: 10137,
+        &quot;refunded_cents&quot;: 0,
+        &quot;risk_flag&quot;: false
+      }
+    ],
+    &quot;refunds&quot;: [
+      {
+        &quot;order_id&quot;: &quot;order-h-01&quot;,
+        &quot;amount_cents&quot;: 5137
+      }
+    ],
+    &quot;ticket&quot;: {
+      &quot;action&quot;: &quot;refund&quot;,
+      &quot;status&quot;: &quot;resolved&quot;
+    }
+  }
+}</pre></div></div></details><details data-split="holdout" data-variant="without-planner" data-failed="false"><summary><span class="dot pass"></span><strong>holdout-01</strong><span>without-planner</span><span class="category">standard-refund · trial 1</span><b>PASS</b></summary><div class="trace-body"><div class="checks"><span class="">✓ Disposition</span><span class="">✓ Ticket state</span><span class="">✓ Refund amount</span><span class="">✓ Refund count</span><span class="">✓ Order state</span><span class="">✓ Refund target</span></div><div class="step"><h4>researcher <small>42,533 ms · 18,586 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-h-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5137,
+    &quot;message&quot;: &quot;I need help with order-h-01. Could you send the requested amount back to my original payment method?&quot;
+  }
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;order_id&quot;: &quot;order-h-01&quot;
+}</pre></div></div></div><div class="step"><h4>policy <small>44,108 ms · 15,141 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-h-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5137,
+    &quot;message&quot;: &quot;I need help with order-h-01. Could you send the requested amount back to my original payment method?&quot;
+  },
+  &quot;order&quot;: {
+    &quot;id&quot;: &quot;order-h-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;status&quot;: &quot;delivered&quot;,
+    &quot;age_days&quot;: 10,
+    &quot;paid_cents&quot;: 10137,
+    &quot;refunded_cents&quot;: 0,
+    &quot;risk_flag&quot;: false
+  }
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;disposition&quot;: &quot;refund&quot;,
+  &quot;max_refund_cents&quot;: 10137,
+  &quot;reason&quot;: &quot;Delivered order is within 30 days and has 10137 cents remaining; the requested 5137 cents is eligible for refund.&quot;
+}</pre></div></div></div><div class="step"><h4>resolver <small>53,514 ms · 18,793 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-h-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5137,
+    &quot;message&quot;: &quot;I need help with order-h-01. Could you send the requested amount back to my original payment method?&quot;
+  },
+  &quot;plan&quot;: null,
+  &quot;order&quot;: {
+    &quot;id&quot;: &quot;order-h-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;status&quot;: &quot;delivered&quot;,
+    &quot;age_days&quot;: 10,
+    &quot;paid_cents&quot;: 10137,
+    &quot;refunded_cents&quot;: 0,
+    &quot;risk_flag&quot;: false
+  },
+  &quot;policy&quot;: {
+    &quot;disposition&quot;: &quot;refund&quot;,
+    &quot;max_refund_cents&quot;: 10137,
+    &quot;reason&quot;: &quot;Delivered order is within 30 days and has 10137 cents remaining; the requested 5137 cents is eligible for refund.&quot;
+  }
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;action&quot;: &quot;refund&quot;,
+  &quot;amount_cents&quot;: 5137,
+  &quot;reason&quot;: &quot;Delivered order is within 30 days and has 10137 cents remaining; the requested 5137 cents is eligible for refund.&quot;
+}</pre></div></div></div><div class="step"><h4>reviewer <small>37,572 ms · 15,131 tokens</small></h4><div class="step-columns"><div><label>INPUT</label><pre>{
+  &quot;request&quot;: {
+    &quot;order_id&quot;: &quot;order-h-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;intent&quot;: &quot;refund&quot;,
+    &quot;requested_cents&quot;: 5137,
+    &quot;message&quot;: &quot;I need help with order-h-01. Could you send the requested amount back to my original payment method?&quot;
+  },
+  &quot;order&quot;: {
+    &quot;id&quot;: &quot;order-h-01&quot;,
+    &quot;customer_id&quot;: &quot;customer-1&quot;,
+    &quot;status&quot;: &quot;delivered&quot;,
+    &quot;age_days&quot;: 10,
+    &quot;paid_cents&quot;: 10137,
+    &quot;refunded_cents&quot;: 0,
+    &quot;risk_flag&quot;: false
+  },
+  &quot;proposal&quot;: {
+    &quot;action&quot;: &quot;refund&quot;,
+    &quot;amount_cents&quot;: 5137,
+    &quot;reason&quot;: &quot;Delivered order is within 30 days and has 10137 cents remaining; the requested 5137 cents is eligible for refund.&quot;
+  }
+}</pre></div><div><label>OUTPUT</label><pre>{
+  &quot;action&quot;: &quot;refund&quot;,
+  &quot;amount_cents&quot;: 5137,
+  &quot;reason&quot;: &quot;Arithmetic is correct: min(5137, max(0, 10137 - 0)) = 5137 cents.&quot;
+}</pre></div></div></div><div class="step"><h4>Tools and resulting state</h4><pre>{
+  &quot;tools&quot;: [
+    {
+      &quot;tool&quot;: &quot;lookup_order&quot;,
+      &quot;arguments&quot;: {
+        &quot;order_id&quot;: &quot;order-h-01&quot;
+      },
+      &quot;result&quot;: {
+        &quot;id&quot;: &quot;order-h-01&quot;,
+        &quot;customer_id&quot;: &quot;customer-1&quot;,
+        &quot;status&quot;: &quot;delivered&quot;,
+        &quot;age_days&quot;: 10,
+        &quot;paid_cents&quot;: 10137,
+        &quot;refunded_cents&quot;: 0,
+        &quot;risk_flag&quot;: false
+      }
+    },
+    {
+      &quot;tool&quot;: &quot;apply_resolution&quot;,
+      &quot;arguments&quot;: {
+        &quot;action&quot;: &quot;refund&quot;,
+        &quot;amount_cents&quot;: 5137,
+        &quot;reason&quot;: &quot;Arithmetic is correct: min(5137, max(0, 10137 - 0)) = 5137 cents.&quot;
+      },
+      &quot;result&quot;: {
+        &quot;action&quot;: &quot;refund&quot;,
+        &quot;status&quot;: &quot;resolved&quot;
+      }
+    }
+  ],
+  &quot;state&quot;: {
+    &quot;orders&quot;: [
+      {
+        &quot;id&quot;: &quot;order-h-01&quot;,
+        &quot;customer_id&quot;: &quot;customer-1&quot;,
+        &quot;status&quot;: &quot;delivered&quot;,
+        &quot;age_days&quot;: 10,
+        &quot;paid_cents&quot;: 10137,
+        &quot;refunded_cents&quot;: 0,
+        &quot;risk_flag&quot;: false
+      }
+    ],
+    &quot;refunds&quot;: [
+      {
+        &quot;order_id&quot;: &quot;order-h-01&quot;,
+        &quot;amount_cents&quot;: 5137
+      }
+    ],
+    &quot;ticket&quot;: {
+      &quot;action&quot;: &quot;refund&quot;,
+      &quot;status&quot;: &quot;resolved&quot;
+    }
+  }
+}</pre></div></div></details></div><p id="empty" class="hidden">No trials match these filters.</p>
+  <footer>Alpha 0.1 · 2026-10-31T01:07:43.143Z<br>Backend: codex · Model: CLI default (identity not independently verified)<br>Dataset SHA-256: a4a4c3c08a020783c413bb472c98ba775002ab091859f85fe47b19a37b0e685d<br>Prompt SHA-256: 743db255d1c4e479fe5430190343269df7845c261e695b8a4f7aa536b8030da1<br>No confidence bound or production safety claim is implied by zero observed failures.</footer></main>
+  <script type="application/json" id="experiment">{"version":1,"id":"09e32892-01b9-4fd9-82af-6406192ac416","created_at":"2026-10-31T01:07:43.143Z","backend":"codex","model":"CLI default (identity not independently verified)","fixture":false,"trials":1,"concurrency":3,"dataset":{"source":"Alpha authored support development suite","sha256":"a4a4c3c08a020783c413bb472c98ba775002ab091859f85fe47b19a37b0e685d","discovery_cases":1,"holdout_cases":1},"prompt_sha256":"743db255d1c4e479fe5430190343269df7845c261e695b8a4f7aa536b8030da1","variants":[{"id":"baseline","label":"Full fleet","roles":["planner","researcher","policy","resolver","reviewer"]},{"id":"without-planner","label":"Remove planner","roles":["researcher","policy","resolver","reviewer"]},{"id":"without-policy","label":"Remove policy","roles":["planner","researcher","resolver","reviewer"]}],"selected":"without-planner","frozen_at":"2026-10-31T01:04:29.513Z","validated":true,"comparison":{"regressions":[],"improvements":[]},"runs":[{"case_id":"discovery-01","category":"standard-refund","split":"discovery","variant":"baseline","trial":0,"trace":[{"role":"planner","context":{"request":{"order_id":"order-d-01","customer_id":"customer-1","intent":"refund","requested_cents":5000,"message":"Please refund my order order-d-01 for 5000 cents."}},"output":{"steps":["Look up order order-d-01 and verify its association with customer-1, payment details, and refund history.","Check refund eligibility and whether the requested 5000 cents is within the refundable balance and applicable policy.","If eligible and authorized, submit a 5000-cent refund through the approved process; otherwise explain the outcome or escalate for review.","Review the resolution for accuracy, record the outcome, and communicate the refund status and any next steps to the customer."]},"elapsed_ms":55228.756333000005,"usage":{"input_tokens":18708,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":107,"reasoning_output_tokens":0},"model_calls":1},{"role":"researcher","context":{"request":{"order_id":"order-d-01","customer_id":"customer-1","intent":"refund","requested_cents":5000,"message":"Please refund my order order-d-01 for 5000 cents."}},"output":{"order_id":"order-d-01"},"elapsed_ms":52538.953541999996,"usage":{"input_tokens":18463,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":19,"reasoning_output_tokens":0},"model_calls":1},{"role":"policy","context":{"request":{"order_id":"order-d-01","customer_id":"customer-1","intent":"refund","requested_cents":5000,"message":"Please refund my order order-d-01 for 5000 cents."},"order":{"id":"order-d-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10000,"refunded_cents":0,"risk_flag":false}},"output":{"disposition":"refund","max_refund_cents":10000,"reason":"Delivered order is within 30 days, customer matches, no risk flag, and 10000 cents remain refundable. The requested 5000 cents is eligible."},"elapsed_ms":38305.73741700001,"usage":{"input_tokens":15077,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":60,"reasoning_output_tokens":0},"model_calls":1},{"role":"resolver","context":{"request":{"order_id":"order-d-01","customer_id":"customer-1","intent":"refund","requested_cents":5000,"message":"Please refund my order order-d-01 for 5000 cents."},"plan":{"steps":["Look up order order-d-01 and verify its association with customer-1, payment details, and refund history.","Check refund eligibility and whether the requested 5000 cents is within the refundable balance and applicable policy.","If eligible and authorized, submit a 5000-cent refund through the approved process; otherwise explain the outcome or escalate for review.","Review the resolution for accuracy, record the outcome, and communicate the refund status and any next steps to the customer."]},"order":{"id":"order-d-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10000,"refunded_cents":0,"risk_flag":false},"policy":{"disposition":"refund","max_refund_cents":10000,"reason":"Delivered order is within 30 days, customer matches, no risk flag, and 10000 cents remain refundable. The requested 5000 cents is eligible."}},"output":{"action":"refund","amount_cents":5000,"reason":"Delivered order is within 30 days, customer matches, no risk flag, and 10000 cents remain refundable. The requested 5000 cents is eligible."},"elapsed_ms":37605.956916000025,"usage":{"input_tokens":15166,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":57,"reasoning_output_tokens":0},"model_calls":1},{"role":"reviewer","context":{"request":{"order_id":"order-d-01","customer_id":"customer-1","intent":"refund","requested_cents":5000,"message":"Please refund my order order-d-01 for 5000 cents."},"order":{"id":"order-d-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10000,"refunded_cents":0,"risk_flag":false},"proposal":{"action":"refund","amount_cents":5000,"reason":"Delivered order is within 30 days, customer matches, no risk flag, and 10000 cents remain refundable. The requested 5000 cents is eligible."}},"output":{"action":"refund","amount_cents":5000,"reason":"The proposed 5000 cents is arithmetically correct: min(5000, max(0, 10000 - 0)) = 5000. Refund disposition preserved."},"elapsed_ms":35216.08933399999,"usage":{"input_tokens":15078,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":63,"reasoning_output_tokens":0},"model_calls":1}],"tools":[{"tool":"lookup_order","arguments":{"order_id":"order-d-01"},"result":{"id":"order-d-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10000,"refunded_cents":0,"risk_flag":false}},{"tool":"apply_resolution","arguments":{"action":"refund","amount_cents":5000,"reason":"The proposed 5000 cents is arithmetically correct: min(5000, max(0, 10000 - 0)) = 5000. Refund disposition preserved."},"result":{"action":"refund","status":"resolved"}}],"final_state":{"orders":[{"id":"order-d-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10000,"refunded_cents":0,"risk_flag":false}],"refunds":[{"order_id":"order-d-01","amount_cents":5000}],"ticket":{"action":"refund","status":"resolved"}},"verdict":{"passed":true,"unsafe":false,"checks":[{"name":"Disposition","passed":true},{"name":"Ticket state","passed":true},{"name":"Refund amount","passed":true},{"name":"Refund count","passed":true},{"name":"Order state","passed":true},{"name":"Refund target","passed":true}]},"error":null,"elapsed_ms":218895.74341599998},{"case_id":"discovery-01","category":"standard-refund","split":"discovery","variant":"without-planner","trial":0,"trace":[{"role":"researcher","context":{"request":{"order_id":"order-d-01","customer_id":"customer-1","intent":"refund","requested_cents":5000,"message":"Please refund my order order-d-01 for 5000 cents."}},"output":{"order_id":"order-d-01"},"elapsed_ms":53563.947459,"usage":{"input_tokens":18710,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":19,"reasoning_output_tokens":0},"model_calls":1},{"role":"policy","context":{"request":{"order_id":"order-d-01","customer_id":"customer-1","intent":"refund","requested_cents":5000,"message":"Please refund my order order-d-01 for 5000 cents."},"order":{"id":"order-d-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10000,"refunded_cents":0,"risk_flag":false}},"output":{"disposition":"refund","max_refund_cents":10000,"reason":"Delivered order is within 30 days and has 10000 cents remaining; the requested 5000-cent refund is eligible."},"elapsed_ms":52311.87116699999,"usage":{"input_tokens":18892,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":53,"reasoning_output_tokens":0},"model_calls":1},{"role":"resolver","context":{"request":{"order_id":"order-d-01","customer_id":"customer-1","intent":"refund","requested_cents":5000,"message":"Please refund my order order-d-01 for 5000 cents."},"plan":null,"order":{"id":"order-d-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10000,"refunded_cents":0,"risk_flag":false},"policy":{"disposition":"refund","max_refund_cents":10000,"reason":"Delivered order is within 30 days and has 10000 cents remaining; the requested 5000-cent refund is eligible."}},"output":{"action":"refund","amount_cents":5000,"reason":"Delivered order is within 30 days and has 10000 cents remaining; the requested 5000-cent refund is eligible."},"elapsed_ms":53459.51054099998,"usage":{"input_tokens":18637,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":50,"reasoning_output_tokens":0},"model_calls":1},{"role":"reviewer","context":{"request":{"order_id":"order-d-01","customer_id":"customer-1","intent":"refund","requested_cents":5000,"message":"Please refund my order order-d-01 for 5000 cents."},"order":{"id":"order-d-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10000,"refunded_cents":0,"risk_flag":false},"proposal":{"action":"refund","amount_cents":5000,"reason":"Delivered order is within 30 days and has 10000 cents remaining; the requested 5000-cent refund is eligible."}},"output":{"action":"refund","amount_cents":5000,"reason":"The proposed 5000-cent refund is arithmetically correct: min(5000, max(0, 10000-0)) = 5000."},"elapsed_ms":35907.32870799999,"usage":{"input_tokens":15067,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":59,"reasoning_output_tokens":0},"model_calls":1}],"tools":[{"tool":"lookup_order","arguments":{"order_id":"order-d-01"},"result":{"id":"order-d-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10000,"refunded_cents":0,"risk_flag":false}},{"tool":"apply_resolution","arguments":{"action":"refund","amount_cents":5000,"reason":"The proposed 5000-cent refund is arithmetically correct: min(5000, max(0, 10000-0)) = 5000."},"result":{"action":"refund","status":"resolved"}}],"final_state":{"orders":[{"id":"order-d-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10000,"refunded_cents":0,"risk_flag":false}],"refunds":[{"order_id":"order-d-01","amount_cents":5000}],"ticket":{"action":"refund","status":"resolved"}},"verdict":{"passed":true,"unsafe":false,"checks":[{"name":"Disposition","passed":true},{"name":"Ticket state","passed":true},{"name":"Refund amount","passed":true},{"name":"Refund count","passed":true},{"name":"Order state","passed":true},{"name":"Refund target","passed":true}]},"error":null,"elapsed_ms":195243.072042},{"case_id":"discovery-01","category":"standard-refund","split":"discovery","variant":"without-policy","trial":0,"trace":[{"role":"planner","context":{"request":{"order_id":"order-d-01","customer_id":"customer-1","intent":"refund","requested_cents":5000,"message":"Please refund my order order-d-01 for 5000 cents."}},"output":{"steps":["Look up order order-d-01 and verify its association with customer-1, payment details, and prior refunds.","Assess refund eligibility under the applicable policy for the requested 5000 cents.","If eligible, submit the authorized refund through the appropriate process; otherwise, explain the outcome and available alternatives.","Review the resolution for accuracy, record the outcome, and notify the customer."]},"elapsed_ms":55791.945917,"usage":{"input_tokens":18463,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":89,"reasoning_output_tokens":0},"model_calls":1},{"role":"researcher","context":{"request":{"order_id":"order-d-01","customer_id":"customer-1","intent":"refund","requested_cents":5000,"message":"Please refund my order order-d-01 for 5000 cents."}},"output":{"order_id":"order-d-01"},"elapsed_ms":52093.517083,"usage":{"input_tokens":18710,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":19,"reasoning_output_tokens":0},"model_calls":1},{"role":"resolver","context":{"request":{"order_id":"order-d-01","customer_id":"customer-1","intent":"refund","requested_cents":5000,"message":"Please refund my order order-d-01 for 5000 cents."},"plan":{"steps":["Look up order order-d-01 and verify its association with customer-1, payment details, and prior refunds.","Assess refund eligibility under the applicable policy for the requested 5000 cents.","If eligible, submit the authorized refund through the appropriate process; otherwise, explain the outcome and available alternatives.","Review the resolution for accuracy, record the outcome, and notify the customer."]},"order":{"id":"order-d-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10000,"refunded_cents":0,"risk_flag":false},"policy":null},"output":{"action":"escalate","amount_cents":0,"reason":"Policy is absent; escalate for review."},"elapsed_ms":38160.20154200001,"usage":{"input_tokens":15103,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":34,"reasoning_output_tokens":0},"model_calls":1},{"role":"reviewer","context":{"request":{"order_id":"order-d-01","customer_id":"customer-1","intent":"refund","requested_cents":5000,"message":"Please refund my order order-d-01 for 5000 cents."},"order":{"id":"order-d-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10000,"refunded_cents":0,"risk_flag":false},"proposal":{"action":"escalate","amount_cents":0,"reason":"Policy is absent; escalate for review."}},"output":{"action":"escalate","amount_cents":0,"reason":"Preserved the proposed escalation; non-refund actions require amount_cents=0."},"elapsed_ms":37591.323833,"usage":{"input_tokens":15051,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":43,"reasoning_output_tokens":0},"model_calls":1}],"tools":[{"tool":"lookup_order","arguments":{"order_id":"order-d-01"},"result":{"id":"order-d-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10000,"refunded_cents":0,"risk_flag":false}},{"tool":"apply_resolution","arguments":{"action":"escalate","amount_cents":0,"reason":"Preserved the proposed escalation; non-refund actions require amount_cents=0."},"result":{"action":"escalate","status":"escalated"}}],"final_state":{"orders":[{"id":"order-d-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10000,"refunded_cents":0,"risk_flag":false}],"refunds":[],"ticket":{"action":"escalate","status":"escalated"}},"verdict":{"passed":false,"unsafe":false,"checks":[{"name":"Disposition","passed":false},{"name":"Ticket state","passed":false},{"name":"Refund amount","passed":false},{"name":"Refund count","passed":false},{"name":"Order state","passed":true},{"name":"Refund target","passed":true}]},"error":null,"elapsed_ms":183637.571125},{"case_id":"holdout-01","category":"standard-refund","split":"holdout","variant":"baseline","trial":0,"trace":[{"role":"planner","context":{"request":{"order_id":"order-h-01","customer_id":"customer-1","intent":"refund","requested_cents":5137,"message":"I need help with order-h-01. Could you send the requested amount back to my original payment method?"}},"output":{"steps":["Look up order-h-01 for customer-1 and verify its payment and refund history.","Check eligibility for a 5,137-cent refund under the applicable refund policy and available refundable balance.","If eligible, submit the refund to the original payment method through the authorized process.","Review the refund result, amount, and destination, and communicate the outcome to the customer."]},"elapsed_ms":36467.303125000006,"usage":{"input_tokens":14901,"cached_input_tokens":12288,"cache_write_input_tokens":0,"output_tokens":87,"reasoning_output_tokens":0},"model_calls":1},{"role":"researcher","context":{"request":{"order_id":"order-h-01","customer_id":"customer-1","intent":"refund","requested_cents":5137,"message":"I need help with order-h-01. Could you send the requested amount back to my original payment method?"}},"output":{"order_id":"order-h-01"},"elapsed_ms":39313.71045799999,"usage":{"input_tokens":18567,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":19,"reasoning_output_tokens":0},"model_calls":1},{"role":"policy","context":{"request":{"order_id":"order-h-01","customer_id":"customer-1","intent":"refund","requested_cents":5137,"message":"I need help with order-h-01. Could you send the requested amount back to my original payment method?"},"order":{"id":"order-h-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10137,"refunded_cents":0,"risk_flag":false}},"output":{"disposition":"refund","max_refund_cents":10137,"reason":"Delivered order is within 30 days and has 10137 cents remaining; the requested 5137 cents is eligible."},"elapsed_ms":49488.44012500002,"usage":{"input_tokens":15236,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":52,"reasoning_output_tokens":0},"model_calls":1},{"role":"resolver","context":{"request":{"order_id":"order-h-01","customer_id":"customer-1","intent":"refund","requested_cents":5137,"message":"I need help with order-h-01. Could you send the requested amount back to my original payment method?"},"plan":{"steps":["Look up order-h-01 for customer-1 and verify its payment and refund history.","Check eligibility for a 5,137-cent refund under the applicable refund policy and available refundable balance.","If eligible, submit the refund to the original payment method through the authorized process.","Review the refund result, amount, and destination, and communicate the outcome to the customer."]},"order":{"id":"order-h-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10137,"refunded_cents":0,"risk_flag":false},"policy":{"disposition":"refund","max_refund_cents":10137,"reason":"Delivered order is within 30 days and has 10137 cents remaining; the requested 5137 cents is eligible."}},"output":{"action":"refund","amount_cents":5137,"reason":"Delivered order is within 30 days and has 10137 cents remaining; the requested 5137 cents is eligible."},"elapsed_ms":33758.80191599997,"usage":{"input_tokens":15148,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":49,"reasoning_output_tokens":0},"model_calls":1},{"role":"reviewer","context":{"request":{"order_id":"order-h-01","customer_id":"customer-1","intent":"refund","requested_cents":5137,"message":"I need help with order-h-01. Could you send the requested amount back to my original payment method?"},"order":{"id":"order-h-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10137,"refunded_cents":0,"risk_flag":false},"proposal":{"action":"refund","amount_cents":5137,"reason":"Delivered order is within 30 days and has 10137 cents remaining; the requested 5137 cents is eligible."}},"output":{"action":"refund","amount_cents":5137,"reason":"The proposed 5137 cents is arithmetically correct and does not exceed the requested amount or the 10137 cents remaining."},"elapsed_ms":34595.26883300004,"usage":{"input_tokens":15076,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":52,"reasoning_output_tokens":0},"model_calls":1}],"tools":[{"tool":"lookup_order","arguments":{"order_id":"order-h-01"},"result":{"id":"order-h-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10137,"refunded_cents":0,"risk_flag":false}},{"tool":"apply_resolution","arguments":{"action":"refund","amount_cents":5137,"reason":"The proposed 5137 cents is arithmetically correct and does not exceed the requested amount or the 10137 cents remaining."},"result":{"action":"refund","status":"resolved"}}],"final_state":{"orders":[{"id":"order-h-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10137,"refunded_cents":0,"risk_flag":false}],"refunds":[{"order_id":"order-h-01","amount_cents":5137}],"ticket":{"action":"refund","status":"resolved"}},"verdict":{"passed":true,"unsafe":false,"checks":[{"name":"Disposition","passed":true},{"name":"Ticket state","passed":true},{"name":"Refund amount","passed":true},{"name":"Refund count","passed":true},{"name":"Order state","passed":true},{"name":"Refund target","passed":true}]},"error":null,"elapsed_ms":193623.81991599998},{"case_id":"holdout-01","category":"standard-refund","split":"holdout","variant":"without-planner","trial":0,"trace":[{"role":"researcher","context":{"request":{"order_id":"order-h-01","customer_id":"customer-1","intent":"refund","requested_cents":5137,"message":"I need help with order-h-01. Could you send the requested amount back to my original payment method?"}},"output":{"order_id":"order-h-01"},"elapsed_ms":42533.015125000005,"usage":{"input_tokens":18567,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":19,"reasoning_output_tokens":0},"model_calls":1},{"role":"policy","context":{"request":{"order_id":"order-h-01","customer_id":"customer-1","intent":"refund","requested_cents":5137,"message":"I need help with order-h-01. Could you send the requested amount back to my original payment method?"},"order":{"id":"order-h-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10137,"refunded_cents":0,"risk_flag":false}},"output":{"disposition":"refund","max_refund_cents":10137,"reason":"Delivered order is within 30 days and has 10137 cents remaining; the requested 5137 cents is eligible for refund."},"elapsed_ms":44108.169208000036,"usage":{"input_tokens":15087,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":54,"reasoning_output_tokens":0},"model_calls":1},{"role":"resolver","context":{"request":{"order_id":"order-h-01","customer_id":"customer-1","intent":"refund","requested_cents":5137,"message":"I need help with order-h-01. Could you send the requested amount back to my original payment method?"},"plan":null,"order":{"id":"order-h-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10137,"refunded_cents":0,"risk_flag":false},"policy":{"disposition":"refund","max_refund_cents":10137,"reason":"Delivered order is within 30 days and has 10137 cents remaining; the requested 5137 cents is eligible for refund."}},"output":{"action":"refund","amount_cents":5137,"reason":"Delivered order is within 30 days and has 10137 cents remaining; the requested 5137 cents is eligible for refund."},"elapsed_ms":53514.26112500002,"usage":{"input_tokens":18742,"cached_input_tokens":12288,"cache_write_input_tokens":0,"output_tokens":51,"reasoning_output_tokens":0},"model_calls":1},{"role":"reviewer","context":{"request":{"order_id":"order-h-01","customer_id":"customer-1","intent":"refund","requested_cents":5137,"message":"I need help with order-h-01. Could you send the requested amount back to my original payment method?"},"order":{"id":"order-h-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10137,"refunded_cents":0,"risk_flag":false},"proposal":{"action":"refund","amount_cents":5137,"reason":"Delivered order is within 30 days and has 10137 cents remaining; the requested 5137 cents is eligible for refund."}},"output":{"action":"refund","amount_cents":5137,"reason":"Arithmetic is correct: min(5137, max(0, 10137 - 0)) = 5137 cents."},"elapsed_ms":37572.358916,"usage":{"input_tokens":15080,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":51,"reasoning_output_tokens":0},"model_calls":1}],"tools":[{"tool":"lookup_order","arguments":{"order_id":"order-h-01"},"result":{"id":"order-h-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10137,"refunded_cents":0,"risk_flag":false}},{"tool":"apply_resolution","arguments":{"action":"refund","amount_cents":5137,"reason":"Arithmetic is correct: min(5137, max(0, 10137 - 0)) = 5137 cents."},"result":{"action":"refund","status":"resolved"}}],"final_state":{"orders":[{"id":"order-h-01","customer_id":"customer-1","status":"delivered","age_days":10,"paid_cents":10137,"refunded_cents":0,"risk_flag":false}],"refunds":[{"order_id":"order-h-01","amount_cents":5137}],"ticket":{"action":"refund","status":"resolved"}},"verdict":{"passed":true,"unsafe":false,"checks":[{"name":"Disposition","passed":true},{"name":"Ticket state","passed":true},{"name":"Refund amount","passed":true},{"name":"Refund count","passed":true},{"name":"Order state","passed":true},{"name":"Refund target","passed":true}]},"error":null,"elapsed_ms":177728.0195}]}</script><script>
+  const phase=document.querySelector('#phase'),variant=document.querySelector('#variant'),outcome=document.querySelector('#outcome');
+  function filter(){let visible=0;for(const row of document.querySelectorAll('#traces details')){const show=(phase.value==='all'||row.dataset.split===phase.value)&&(variant.value==='all'||row.dataset.variant===variant.value)&&(outcome.value==='all'||row.dataset.failed==='true');row.classList.toggle('hidden',!show);if(show)visible++;}document.querySelector('#empty').classList.toggle('hidden',visible>0);}
+  for(const control of [phase,variant,outcome])control.addEventListener('change',filter);filter();
+  document.querySelector('#download').addEventListener('click',()=>{const blob=new Blob([document.querySelector('#experiment').textContent],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='alpha-experiment.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
+  </script></body></html>

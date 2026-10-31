@@ -34,6 +34,20 @@ CLI options include `--model`, `--limit`, `--trials`, `--variants`, `--concurren
 
 Live reports record the usage events returned by the CLI. Input tokens include cached input, which is also reported separately. Alpha does not convert usage into billed dollars. Latency includes process startup. Without `--model`, model identity is labeled as the CLI default rather than a verified provider identity.
 
+## First measured results
+
+The checked-in [live report](examples/live/report.html) contains 22 real model requests across one discovery case and one holdout case, with one trial each. Both cases are variants of the standard-refund scenario; this is a smoke test of the end-to-end experiment.
+
+| Live workflow | Discovery | Holdout | Holdout model calls | Holdout reported tokens |
+| --- | --- | --- | --- | --- |
+| Full fleet | Pass | Pass | 5 | 79,187 |
+| Remove planner | Pass | Pass | 4 | 67,651 |
+| Remove policy | Fail | Not selected | — | — |
+
+The selected workflow used 20% fewer calls and 14.6% fewer reported tokens on the single holdout task. Wall time was 177.7 seconds versus 193.6 seconds, including CLI startup and service latency. These observations establish that the prototype runs and detects a harmful removal. They do not establish production savings, statistical equivalence, or the value of pruning an independently built agent.
+
+The separate scripted demonstration evaluates all 32 authored cases twice. It preserves every checked outcome when removing the planner, while removing the reviewer produces excess refunds on two scenario families.
+
 ## Fleet authoring and eve
 
 The root and five specialists are authored as an [eve project](https://eve.dev/docs/subagents). Prompts live in `agent/subagents/<role>/instructions.md`; each specialist has an `agent.ts` manifest. The local experiment harness reads those same prompts and runs their contracts through the selected backend. **The Codex adapter tests the role prompts and host workflow, not eve's session or delegation runtime.**
