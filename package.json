@@ -1,0 +1,22 @@
+{
+  "name": "alpha-agent-lab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Measure the value of every step in an agent fleet.",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "demo": "node src/cli.mjs experiment --backend fixture",
+    "live": "node src/cli.mjs experiment --backend codex --limit 2 --trials 1",
+    "test": "node --test",
+    "dev": "eve dev",
+    "build": "eve build"
+  },
+  "dependencies": {
+    "ai": "^7.0.159",
+    "eve": "^1.0.0-rc.0",
+    "zod": "^4.6.7"
+  }
+}

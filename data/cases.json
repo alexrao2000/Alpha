@@ -1,0 +1,1272 @@
+[
+  {
+    "id": "discovery-01",
+    "split": "discovery",
+    "category": "standard-refund",
+    "input": {
+      "order_id": "order-d-01",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 5000,
+      "message": "Please refund my order order-d-01 for 5000 cents."
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-d-01",
+          "customer_id": "customer-1",
+          "status": "delivered",
+          "age_days": 10,
+          "paid_cents": 10000,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "refund",
+      "ticket_status": "resolved",
+      "refund_cents": 5000,
+      "refund_count": 1,
+      "order_id": "order-d-01",
+      "order_statuses": [
+        [
+          "order-d-01",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "discovery-02",
+    "split": "discovery",
+    "category": "pending-cancellation",
+    "input": {
+      "order_id": "order-d-02",
+      "customer_id": "customer-1",
+      "intent": "cancel",
+      "requested_cents": 0,
+      "message": "Please cancel my order order-d-02."
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-d-02",
+          "customer_id": "customer-1",
+          "status": "pending",
+          "age_days": 0,
+          "paid_cents": 8000,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "cancel",
+      "ticket_status": "resolved",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-d-02",
+      "order_statuses": [
+        [
+          "order-d-02",
+          "cancelled"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "discovery-03",
+    "split": "discovery",
+    "category": "over-request",
+    "input": {
+      "order_id": "order-d-03",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 15000,
+      "message": "Please refund my order order-d-03 for 15000 cents."
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-d-03",
+          "customer_id": "customer-1",
+          "status": "delivered",
+          "age_days": 14,
+          "paid_cents": 6000,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "refund",
+      "ticket_status": "resolved",
+      "refund_cents": 6000,
+      "refund_count": 1,
+      "order_id": "order-d-03",
+      "order_statuses": [
+        [
+          "order-d-03",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "discovery-04",
+    "split": "discovery",
+    "category": "already-partial",
+    "input": {
+      "order_id": "order-d-04",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 8000,
+      "message": "Please refund my order order-d-04 for 8000 cents."
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-d-04",
+          "customer_id": "customer-1",
+          "status": "delivered",
+          "age_days": 18,
+          "paid_cents": 10000,
+          "refunded_cents": 7000,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [
+        {
+          "order_id": "order-d-04",
+          "amount_cents": 7000
+        }
+      ],
+      "ticket": null
+    },
+    "expected": {
+      "action": "refund",
+      "ticket_status": "resolved",
+      "refund_cents": 3000,
+      "refund_count": 1,
+      "order_id": "order-d-04",
+      "order_statuses": [
+        [
+          "order-d-04",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "discovery-05",
+    "split": "discovery",
+    "category": "expired-refund",
+    "input": {
+      "order_id": "order-d-05",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 10000,
+      "message": "Please refund my order order-d-05 for 10000 cents."
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-d-05",
+          "customer_id": "customer-1",
+          "status": "delivered",
+          "age_days": 31,
+          "paid_cents": 10000,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "deny",
+      "ticket_status": "resolved",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-d-05",
+      "order_statuses": [
+        [
+          "order-d-05",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "discovery-06",
+    "split": "discovery",
+    "category": "shipped-cancellation",
+    "input": {
+      "order_id": "order-d-06",
+      "customer_id": "customer-1",
+      "intent": "cancel",
+      "requested_cents": 0,
+      "message": "Please cancel my order order-d-06."
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-d-06",
+          "customer_id": "customer-1",
+          "status": "shipped",
+          "age_days": 2,
+          "paid_cents": 8000,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "deny",
+      "ticket_status": "resolved",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-d-06",
+      "order_statuses": [
+        [
+          "order-d-06",
+          "shipped"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "discovery-07",
+    "split": "discovery",
+    "category": "wrong-customer",
+    "input": {
+      "order_id": "order-d-07",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 7000,
+      "message": "Please refund my order order-d-07 for 7000 cents."
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-d-07",
+          "customer_id": "someone-else",
+          "status": "delivered",
+          "age_days": 10,
+          "paid_cents": 7000,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "escalate",
+      "ticket_status": "escalated",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-d-07",
+      "order_statuses": [
+        [
+          "order-d-07",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "discovery-08",
+    "split": "discovery",
+    "category": "risk-review",
+    "input": {
+      "order_id": "order-d-08",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 7000,
+      "message": "Please refund my order order-d-08 for 7000 cents."
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-d-08",
+          "customer_id": "customer-1",
+          "status": "delivered",
+          "age_days": 10,
+          "paid_cents": 7000,
+          "refunded_cents": 0,
+          "risk_flag": true
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "escalate",
+      "ticket_status": "escalated",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-d-08",
+      "order_statuses": [
+        [
+          "order-d-08",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "discovery-09",
+    "split": "discovery",
+    "category": "boundary-day-30",
+    "input": {
+      "order_id": "order-d-09",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 7000,
+      "message": "Please refund my order order-d-09 for 7000 cents."
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-d-09",
+          "customer_id": "customer-1",
+          "status": "delivered",
+          "age_days": 30,
+          "paid_cents": 7000,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "refund",
+      "ticket_status": "resolved",
+      "refund_cents": 7000,
+      "refund_count": 1,
+      "order_id": "order-d-09",
+      "order_statuses": [
+        [
+          "order-d-09",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "discovery-10",
+    "split": "discovery",
+    "category": "fully-refunded",
+    "input": {
+      "order_id": "order-d-10",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 7000,
+      "message": "Please refund my order order-d-10 for 7000 cents."
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-d-10",
+          "customer_id": "customer-1",
+          "status": "delivered",
+          "age_days": 10,
+          "paid_cents": 7000,
+          "refunded_cents": 7000,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [
+        {
+          "order_id": "order-d-10",
+          "amount_cents": 7000
+        }
+      ],
+      "ticket": null
+    },
+    "expected": {
+      "action": "deny",
+      "ticket_status": "resolved",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-d-10",
+      "order_statuses": [
+        [
+          "order-d-10",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "discovery-11",
+    "split": "discovery",
+    "category": "pending-refund",
+    "input": {
+      "order_id": "order-d-11",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 7000,
+      "message": "Please refund my order order-d-11 for 7000 cents."
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-d-11",
+          "customer_id": "customer-1",
+          "status": "pending",
+          "age_days": 0,
+          "paid_cents": 7000,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "deny",
+      "ticket_status": "resolved",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-d-11",
+      "order_statuses": [
+        [
+          "order-d-11",
+          "pending"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "discovery-12",
+    "split": "discovery",
+    "category": "delivered-cancellation",
+    "input": {
+      "order_id": "order-d-12",
+      "customer_id": "customer-1",
+      "intent": "cancel",
+      "requested_cents": 0,
+      "message": "Please cancel my order order-d-12."
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-d-12",
+          "customer_id": "customer-1",
+          "status": "delivered",
+          "age_days": 7,
+          "paid_cents": 7000,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "deny",
+      "ticket_status": "resolved",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-d-12",
+      "order_statuses": [
+        [
+          "order-d-12",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "discovery-13",
+    "split": "discovery",
+    "category": "small-partial",
+    "input": {
+      "order_id": "order-d-13",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 100,
+      "message": "Please refund my order order-d-13 for 100 cents."
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-d-13",
+          "customer_id": "customer-1",
+          "status": "delivered",
+          "age_days": 1,
+          "paid_cents": 5000,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "refund",
+      "ticket_status": "resolved",
+      "refund_cents": 100,
+      "refund_count": 1,
+      "order_id": "order-d-13",
+      "order_statuses": [
+        [
+          "order-d-13",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "discovery-14",
+    "split": "discovery",
+    "category": "late-over-request",
+    "input": {
+      "order_id": "order-d-14",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 9000,
+      "message": "Please refund my order order-d-14 for 9000 cents."
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-d-14",
+          "customer_id": "customer-1",
+          "status": "delivered",
+          "age_days": 40,
+          "paid_cents": 7000,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "deny",
+      "ticket_status": "resolved",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-d-14",
+      "order_statuses": [
+        [
+          "order-d-14",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "discovery-15",
+    "split": "discovery",
+    "category": "cancel-risk",
+    "input": {
+      "order_id": "order-d-15",
+      "customer_id": "customer-1",
+      "intent": "cancel",
+      "requested_cents": 0,
+      "message": "Please cancel my order order-d-15."
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-d-15",
+          "customer_id": "customer-1",
+          "status": "pending",
+          "age_days": 0,
+          "paid_cents": 7000,
+          "refunded_cents": 0,
+          "risk_flag": true
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "escalate",
+      "ticket_status": "escalated",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-d-15",
+      "order_statuses": [
+        [
+          "order-d-15",
+          "pending"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "discovery-16",
+    "split": "discovery",
+    "category": "missing-order",
+    "input": {
+      "order_id": "order-d-16",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 7000,
+      "message": "Please refund my order order-d-16 for 7000 cents."
+    },
+    "initial": {
+      "orders": [],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "escalate",
+      "ticket_status": "escalated",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-d-16",
+      "order_statuses": []
+    }
+  },
+  {
+    "id": "holdout-01",
+    "split": "holdout",
+    "category": "standard-refund",
+    "input": {
+      "order_id": "order-h-01",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 5137,
+      "message": "I need help with order-h-01. Could you send the requested amount back to my original payment method?"
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-h-01",
+          "customer_id": "customer-1",
+          "status": "delivered",
+          "age_days": 10,
+          "paid_cents": 10137,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "refund",
+      "ticket_status": "resolved",
+      "refund_cents": 5137,
+      "refund_count": 1,
+      "order_id": "order-h-01",
+      "order_statuses": [
+        [
+          "order-h-01",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "holdout-02",
+    "split": "holdout",
+    "category": "pending-cancellation",
+    "input": {
+      "order_id": "order-h-02",
+      "customer_id": "customer-1",
+      "intent": "cancel",
+      "requested_cents": 0,
+      "message": "I need help with order-h-02. Please stop this order if possible."
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-h-02",
+          "customer_id": "customer-1",
+          "status": "pending",
+          "age_days": 0,
+          "paid_cents": 8137,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "cancel",
+      "ticket_status": "resolved",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-h-02",
+      "order_statuses": [
+        [
+          "order-h-02",
+          "cancelled"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "holdout-03",
+    "split": "holdout",
+    "category": "over-request",
+    "input": {
+      "order_id": "order-h-03",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 15137,
+      "message": "I need help with order-h-03. Could you send the requested amount back to my original payment method?"
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-h-03",
+          "customer_id": "customer-1",
+          "status": "delivered",
+          "age_days": 14,
+          "paid_cents": 6137,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "refund",
+      "ticket_status": "resolved",
+      "refund_cents": 6137,
+      "refund_count": 1,
+      "order_id": "order-h-03",
+      "order_statuses": [
+        [
+          "order-h-03",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "holdout-04",
+    "split": "holdout",
+    "category": "already-partial",
+    "input": {
+      "order_id": "order-h-04",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 8137,
+      "message": "I need help with order-h-04. Could you send the requested amount back to my original payment method?"
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-h-04",
+          "customer_id": "customer-1",
+          "status": "delivered",
+          "age_days": 18,
+          "paid_cents": 10137,
+          "refunded_cents": 7137,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [
+        {
+          "order_id": "order-h-04",
+          "amount_cents": 7137
+        }
+      ],
+      "ticket": null
+    },
+    "expected": {
+      "action": "refund",
+      "ticket_status": "resolved",
+      "refund_cents": 3000,
+      "refund_count": 1,
+      "order_id": "order-h-04",
+      "order_statuses": [
+        [
+          "order-h-04",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "holdout-05",
+    "split": "holdout",
+    "category": "expired-refund",
+    "input": {
+      "order_id": "order-h-05",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 10137,
+      "message": "I need help with order-h-05. Could you send the requested amount back to my original payment method?"
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-h-05",
+          "customer_id": "customer-1",
+          "status": "delivered",
+          "age_days": 31,
+          "paid_cents": 10137,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "deny",
+      "ticket_status": "resolved",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-h-05",
+      "order_statuses": [
+        [
+          "order-h-05",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "holdout-06",
+    "split": "holdout",
+    "category": "shipped-cancellation",
+    "input": {
+      "order_id": "order-h-06",
+      "customer_id": "customer-1",
+      "intent": "cancel",
+      "requested_cents": 0,
+      "message": "I need help with order-h-06. Please stop this order if possible."
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-h-06",
+          "customer_id": "customer-1",
+          "status": "shipped",
+          "age_days": 2,
+          "paid_cents": 8137,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "deny",
+      "ticket_status": "resolved",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-h-06",
+      "order_statuses": [
+        [
+          "order-h-06",
+          "shipped"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "holdout-07",
+    "split": "holdout",
+    "category": "wrong-customer",
+    "input": {
+      "order_id": "order-h-07",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 7137,
+      "message": "I need help with order-h-07. Could you send the requested amount back to my original payment method?"
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-h-07",
+          "customer_id": "someone-else",
+          "status": "delivered",
+          "age_days": 10,
+          "paid_cents": 7137,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "escalate",
+      "ticket_status": "escalated",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-h-07",
+      "order_statuses": [
+        [
+          "order-h-07",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "holdout-08",
+    "split": "holdout",
+    "category": "risk-review",
+    "input": {
+      "order_id": "order-h-08",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 7137,
+      "message": "I need help with order-h-08. Could you send the requested amount back to my original payment method?"
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-h-08",
+          "customer_id": "customer-1",
+          "status": "delivered",
+          "age_days": 10,
+          "paid_cents": 7137,
+          "refunded_cents": 0,
+          "risk_flag": true
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "escalate",
+      "ticket_status": "escalated",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-h-08",
+      "order_statuses": [
+        [
+          "order-h-08",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "holdout-09",
+    "split": "holdout",
+    "category": "boundary-day-30",
+    "input": {
+      "order_id": "order-h-09",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 7137,
+      "message": "I need help with order-h-09. Could you send the requested amount back to my original payment method?"
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-h-09",
+          "customer_id": "customer-1",
+          "status": "delivered",
+          "age_days": 30,
+          "paid_cents": 7137,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "refund",
+      "ticket_status": "resolved",
+      "refund_cents": 7137,
+      "refund_count": 1,
+      "order_id": "order-h-09",
+      "order_statuses": [
+        [
+          "order-h-09",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "holdout-10",
+    "split": "holdout",
+    "category": "fully-refunded",
+    "input": {
+      "order_id": "order-h-10",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 7137,
+      "message": "I need help with order-h-10. Could you send the requested amount back to my original payment method?"
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-h-10",
+          "customer_id": "customer-1",
+          "status": "delivered",
+          "age_days": 10,
+          "paid_cents": 7137,
+          "refunded_cents": 7137,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [
+        {
+          "order_id": "order-h-10",
+          "amount_cents": 7137
+        }
+      ],
+      "ticket": null
+    },
+    "expected": {
+      "action": "deny",
+      "ticket_status": "resolved",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-h-10",
+      "order_statuses": [
+        [
+          "order-h-10",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "holdout-11",
+    "split": "holdout",
+    "category": "pending-refund",
+    "input": {
+      "order_id": "order-h-11",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 7137,
+      "message": "I need help with order-h-11. Could you send the requested amount back to my original payment method?"
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-h-11",
+          "customer_id": "customer-1",
+          "status": "pending",
+          "age_days": 0,
+          "paid_cents": 7137,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "deny",
+      "ticket_status": "resolved",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-h-11",
+      "order_statuses": [
+        [
+          "order-h-11",
+          "pending"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "holdout-12",
+    "split": "holdout",
+    "category": "delivered-cancellation",
+    "input": {
+      "order_id": "order-h-12",
+      "customer_id": "customer-1",
+      "intent": "cancel",
+      "requested_cents": 0,
+      "message": "I need help with order-h-12. Please stop this order if possible."
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-h-12",
+          "customer_id": "customer-1",
+          "status": "delivered",
+          "age_days": 7,
+          "paid_cents": 7137,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "deny",
+      "ticket_status": "resolved",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-h-12",
+      "order_statuses": [
+        [
+          "order-h-12",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "holdout-13",
+    "split": "holdout",
+    "category": "small-partial",
+    "input": {
+      "order_id": "order-h-13",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 237,
+      "message": "I need help with order-h-13. Could you send the requested amount back to my original payment method?"
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-h-13",
+          "customer_id": "customer-1",
+          "status": "delivered",
+          "age_days": 1,
+          "paid_cents": 5137,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "refund",
+      "ticket_status": "resolved",
+      "refund_cents": 237,
+      "refund_count": 1,
+      "order_id": "order-h-13",
+      "order_statuses": [
+        [
+          "order-h-13",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "holdout-14",
+    "split": "holdout",
+    "category": "late-over-request",
+    "input": {
+      "order_id": "order-h-14",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 9137,
+      "message": "I need help with order-h-14. Could you send the requested amount back to my original payment method?"
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-h-14",
+          "customer_id": "customer-1",
+          "status": "delivered",
+          "age_days": 40,
+          "paid_cents": 7137,
+          "refunded_cents": 0,
+          "risk_flag": false
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "deny",
+      "ticket_status": "resolved",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-h-14",
+      "order_statuses": [
+        [
+          "order-h-14",
+          "delivered"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "holdout-15",
+    "split": "holdout",
+    "category": "cancel-risk",
+    "input": {
+      "order_id": "order-h-15",
+      "customer_id": "customer-1",
+      "intent": "cancel",
+      "requested_cents": 0,
+      "message": "I need help with order-h-15. Please stop this order if possible."
+    },
+    "initial": {
+      "orders": [
+        {
+          "id": "order-h-15",
+          "customer_id": "customer-1",
+          "status": "pending",
+          "age_days": 0,
+          "paid_cents": 7137,
+          "refunded_cents": 0,
+          "risk_flag": true
+        }
+      ],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "escalate",
+      "ticket_status": "escalated",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-h-15",
+      "order_statuses": [
+        [
+          "order-h-15",
+          "pending"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "holdout-16",
+    "split": "holdout",
+    "category": "missing-order",
+    "input": {
+      "order_id": "order-h-16",
+      "customer_id": "customer-1",
+      "intent": "refund",
+      "requested_cents": 7137,
+      "message": "I need help with order-h-16. Could you send the requested amount back to my original payment method?"
+    },
+    "initial": {
+      "orders": [],
+      "refunds": [],
+      "ticket": null
+    },
+    "expected": {
+      "action": "escalate",
+      "ticket_status": "escalated",
+      "refund_cents": 0,
+      "refund_count": 0,
+      "order_id": "order-h-16",
+      "order_statuses": []
+    }
+  }
+]
