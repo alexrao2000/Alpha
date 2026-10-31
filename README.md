@@ -15,6 +15,22 @@ npm run external
 
 The experiment compares the original crew with removal of either review role, selects on four discovery games, and tests the fixed candidate on four different holdout games. Generated programs are checked by executable input/output tests. See the [adapter documentation](integrations/crewai-game-builder/README.md) for setup, provenance, model-transport differences, and limits. The original support fleet below remains a scripted development example.
 
+## Measured upstream results
+
+The [saved upstream experiment](examples/upstream-game-builder/report.html) made 52 live model requests across four discovery games and four different holdout games. Alpha selected removal of the chief QA agent using discovery results only.
+
+| Holdout result | Original crew | Remove chief QA |
+| --- | --- | --- |
+| Games passed | 4/4 | 4/4 |
+| Executable checks passed | 42/42 | 42/42 |
+| Model requests | 14 | 8 |
+| Reported input + output tokens | 225,680 | 128,915 |
+| Median workflow wall time | 62.0 seconds | 46.4 seconds |
+
+On these holdout tasks the selected version used 42.9% fewer model requests and 42.9% fewer reported tokens. Native delegation made the original crew issue more than one request per role on one game. The earlier discovery run also showed that removing the QA engineer could increase requests: the chief delegated work back to the senior engineer.
+
+This is one trial per game with a Codex-backed model adapter. The upstream crew is independently authored; the game specifications and executable checks are Alpha-authored. The result supports this small workload, not a general claim that the chief QA role is redundant. CLI usage includes cached tokens and transport overhead; these are not billed-dollar savings.
+
 ## Run the prototype
 
 The experiment runner has no third-party dependencies and works with Node.js 20 or newer. The optional eve runtime requires Node.js 24 or newer.

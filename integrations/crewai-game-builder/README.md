@@ -42,3 +42,9 @@ Each finished experiment writes `experiment.json`, `report.html`, and a proposed
 npm test
 work/crewai-venv/bin/python -m unittest discover -s test -p '*_test.py' -v
 ```
+
+## Recorded run
+
+The [checked-in report](../../examples/upstream-game-builder/report.html) records 52 real requests. The selected configuration removed the chief QA agent. Both baseline and candidate passed all 42 executable checks across the four holdout games. Baseline used 14 requests and 225,680 reported tokens; the candidate used 8 requests and 128,915 tokens.
+
+The adapter SHA-256 in the result was checked against the files after the run. Exploratory adapter-development runs were not mixed into this recorded experiment.

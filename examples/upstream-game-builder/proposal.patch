@@ -1,0 +1,5 @@
+--- a/integrations/crewai-game-builder/fleet.config.json
++++ b/integrations/crewai-game-builder/fleet.config.json
+@@ -1 +1 @@
+-["senior_engineer_agent","qa_engineer_agent","chief_qa_engineer_agent"]
++["senior_engineer_agent","qa_engineer_agent"]
