@@ -2,6 +2,7 @@
 
 Alpha measures the contribution of individual agent steps to completed work.
 
+- Keep the experiment engine and transports in `alpha/`; npm and legacy Node entry points are launchers.
 - Keep the built-in fleet in `agent/subagents/` and native external adapters in `integrations/`.
 - Preserve pinned upstream bytes and verify their hashes before external runs.
 - Keep expected outcomes out of agent messages, role context, and model responses.

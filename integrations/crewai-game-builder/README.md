@@ -6,12 +6,11 @@ The selected upstream files are preserved byte for byte. [provenance.json](prove
 
 ## Run
 
-Prerequisites: Node.js 24+, a logged-in Codex CLI, Python 3.11 or 3.12, and macOS for the generated-code sandbox.
+Prerequisites: Python 3.11+ for the Alpha core, a logged-in Codex CLI, a separate Python 3.11 or 3.12 native-fleet environment, and macOS for the generated-code sandbox. Node.js is optional; it is used only for npm convenience commands or the optional eve runtime.
 
 ```sh
-cd /Users/alexr/Alpha
-npm run setup:external
-npm run external
+sh scripts/setup-external.sh
+python3 -m alpha experiment --fleet crewai-game-builder --backend codex --trials 1 --concurrency 4
 ```
 
 Setup installs into `work/crewai-venv` using the resolved [dependency lock](requirements.lock). Set `ALPHA_BASE_PYTHON` to choose the interpreter used for setup. Set `ALPHA_PYTHON` to use an already installed runtime for experiments. The measured run uses Python 3.12.14, even though the upstream application manifest declares Python `<3.12`; the pinned CrewAI package runs on this interpreter.
@@ -20,7 +19,7 @@ Setup installs into `work/crewai-venv` using the resolved [dependency lock](requ
 
 The adapter imports the original [crew class](upstream/src/game_builder_crew/crew.py) and constructs its native Crew. The [role descriptions](upstream/src/game_builder_crew/config/agents.yaml), [tasks](upstream/src/game_builder_crew/config/tasks.yaml), sequential process, task-context propagation, ReAct parsing, and chief engineer's delegation permission remain upstream behavior. Each trial starts with a fresh Crew and local state directory.
 
-The injected `BaseLLM` adapter transports native CrewAI messages through the existing Codex login. It snapshots messages before the model call and records the returned text and usage. CrewAI interprets that text and executes any native delegation. The model CLI's own shell, web, MCP, and file-change tools are prohibited by the transport. This tests the upstream fleet **with this adapter and model**, not its default GPT-4o configuration.
+The injected `BaseLLM` adapter invokes the Python model bridge, which transports native CrewAI messages through the existing Codex login. The process boundary isolates pinned framework dependencies; there is no Node model bridge. It snapshots messages before the model call and records the returned text and usage. CrewAI interprets that text and executes any native delegation. The model CLI's own shell, web, MCP, and file-change tools are prohibited by the transport. This tests the upstream fleet **with this adapter and model**, not its default GPT-4o configuration.
 
 For removal variants, Alpha removes the selected agent and its task from the constructed Crew. It does not transfer the removed prompt to another agent or insert a cached answer. The surviving native tasks rerun from scratch. The senior engineer remains in all variants.
 
@@ -39,12 +38,11 @@ Each workflow has a 12-request model budget. Every completed workflow is journal
 Each finished experiment writes `experiment.json`, `report.html`, and a proposed patch to [fleet.config.json](fleet.config.json). The report includes the upstream commit, adapter digest, task/prompt digests, model usage, generated programs, individual executable checks, and input snapshots for every model request. The proposal is not applied automatically.
 
 ```sh
-npm test
-work/crewai-venv/bin/python -m unittest discover -s test -p '*_test.py' -v
+python3 -m unittest discover -s test -p '*_test.py' -v
 ```
 
 ## Recorded run
 
 The [checked-in report](../../examples/upstream-game-builder/report.html) records 52 real requests. The selected configuration removed the chief QA agent. Both baseline and candidate passed all 42 executable checks across the four holdout games. Baseline used 14 requests and 225,680 reported tokens; the candidate used 8 requests and 128,915 tokens.
 
-The adapter SHA-256 in the result was checked against the files after the run. Exploratory adapter-development runs were not mixed into this recorded experiment.
+This recorded run used the original JavaScript transport. Its adapter SHA-256 was checked against those files after the run. The Python migration preserves the recorded JSON and report; new experiments hash the Python adapter and transport files. Native integration tests use scripted model responses and real executable grading, not new live benchmark measurements. Exploratory adapter-development runs were not mixed into this recorded experiment.

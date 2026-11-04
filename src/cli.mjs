@@ -1,84 +1,14 @@
-/* The CLI writes reproducible evidence and a standalone report. It never applies
-   the selected change or sends messages to external people or applications. */
+/* Compatibility entry point for existing commands. Python owns execution and reports. */
 
-import { mkdir, writeFile, readFile, appendFile } from 'node:fs/promises';
-import { resolve, join } from 'node:path';
-import { loadCases, loadVariants } from './domain.mjs';
-import { FixtureBackend, CodexBackend } from './backends.mjs';
-import { loadPrompts, experiment, summarize } from './engine.mjs';
-import { renderReport } from './report.mjs';
-import { loadExternalFleet, runExternalCase } from './external-fleet.mjs';
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { delimiter } from 'node:path';
 
-async function main() {
-  const [command = 'help', ...args] = process.argv.slice(2);
-  if (command === 'help' || args.includes('--help')) {
-    console.log(`Alpha · measure the value of each agent step\n\nnode src/cli.mjs experiment [options]\n  --backend fixture|codex  Scripted demo or live CLI model requests (default: fixture)\n  --fleet crewai-game-builder  Run the pinned upstream CrewAI fleet\n  --limit N                Cases per split (default: all)\n  --trials N               Independent trials per case (default: 2)\n  --concurrency N          Independent workflows at once, 1–8 (default: 1)\n  --variants ID,ID         Candidate variants; baseline is always included\n  --model NAME             Optional model override for the live backend\n  --out DIR                Output directory (default: runs/<timestamp>)\n\nnode src/cli.mjs report PATH_TO_JSON [--out DIR]\n\nFixture mode does not call a model. Live mode uses your existing Codex CLI login.\nA complete live run can issue hundreds of model requests; use --limit 2 initially.`);
-    return;
-  }
-  const options = {};
-  const known = new Set(['backend', 'limit', 'trials', 'variants', 'model', 'out', 'concurrency', 'fleet']);
-  let inputPath;
-  for (let i = 0; i < args.length; i++) {
-    if (command === 'report' && !args[i].startsWith('--') && !inputPath) { inputPath = args[i]; continue; }
-    const key = args[i].slice(2);
-    if (!args[i].startsWith('--') || !known.has(key) || !args[i + 1] || args[i + 1].startsWith('--')) {
-      throw new Error(`Unknown or incomplete option: ${args[i]}`);
-    }
-    options[key] = args[++i];
-  }
-  const out = resolve(options.out ?? join('runs', new Date().toISOString().replace(/[:.]/g, '-')));
-  let report;
-  if (command === 'report') {
-    if (!inputPath) throw new Error('Provide an experiment JSON path.');
-    report = JSON.parse(await readFile(resolve(inputPath), 'utf8'));
-  } else if (command === 'experiment') {
-    const backendName = options.backend ?? 'fixture';
-    if (!['fixture', 'codex'].includes(backendName)) throw new Error('Backend must be fixture or codex.');
-    const backend = backendName === 'fixture' ? new FixtureBackend() : new CodexBackend({ model: options.model });
-    if (options.fleet && options.fleet !== 'crewai-game-builder') throw new Error('Unknown fleet.');
-    const external = options.fleet ? await loadExternalFleet() : null;
-    if (external && backendName !== 'codex') throw new Error('The external fleet requires the live codex backend.');
-    const available = external?.variants ?? await loadVariants();
-    let variants = available;
-    if (options.variants) {
-      const ids = new Set(['baseline', ...options.variants.split(',')]);
-      if ([...ids].some(id => !available.some(v => v.id === id))) throw new Error('Unknown variant ID.');
-      variants = available.filter(v => ids.has(v.id));
-    }
-    const controller = new AbortController();
-    await mkdir(out, { recursive: true });
-    await writeFile(join(out, 'progress.jsonl'), '');
-    let journal = Promise.resolve();
-    const cancel = () => controller.abort();
-    process.once('SIGINT', cancel);
-    process.once('SIGTERM', cancel);
-    try {
-      report = await experiment({ cases: external?.cases ?? await loadCases(), prompts: external?.prompts ?? await loadPrompts(), backend,
-        runTask: external ? runExternalCase : undefined, fleet: external?.fleet ?? null,
-        trials: options.trials === undefined ? 2 : Number(options.trials),
-        concurrency: options.concurrency === undefined ? 1 : Number(options.concurrency),
-        limit: options.limit === undefined ? undefined : Number(options.limit), variants,
-        signal: controller.signal, onProgress: message => process.stderr.write(`${message}\n`),
-        onRun: run => {
-          process.stderr.write(`Completed · ${run.case_id} · ${run.variant} · ${run.verdict.passed ? 'PASS' : 'FAIL'}${run.error ? ` · ${run.error}` : ''}\n`);
-          journal = journal.then(() => appendFile(join(out, 'progress.jsonl'), JSON.stringify(run) + '\n'));
-          return journal;
-        } });
-    } finally {
-      process.off('SIGINT', cancel); process.off('SIGTERM', cancel);
-    }
-  } else throw new Error(`Unknown command: ${command}`);
-  await mkdir(out, { recursive: true });
-  await writeFile(join(out, 'experiment.json'), JSON.stringify(report, null, 2) + '\n');
-  await writeFile(join(out, 'report.html'), renderReport(report));
-  const selected = report.variants.find(v => v.id === report.selected);
-  const configPath = report.fleet?.config_path ?? 'fleet.config.json';
-  await writeFile(join(out, 'proposal.patch'), selected ?
-    `--- a/${configPath}\n+++ b/${configPath}\n@@ -1 +1 @@\n-${JSON.stringify(report.variants[0].roles)}\n+${JSON.stringify(selected.roles)}\n` : 'No candidate selected.\n');
-  console.log(JSON.stringify({ backend: report.backend, selected: report.selected, validated: report.validated,
-    holdout: summarize(report.runs.filter(r => r.split === 'holdout' && r.variant === (report.selected ?? 'baseline'))),
-    report: join(out, 'report.html') }, null, 2));
-  if (report.runs.some(r => r.error)) process.exitCode = 2;
-}
-
-main().catch(error => { console.error(`Alpha: ${error.message}`); process.exitCode = 1; });
+const root = fileURLToPath(new URL('../', import.meta.url));
+const child = spawn(process.env.ALPHA_CORE_PYTHON ?? 'python3', ['-m', 'alpha', ...process.argv.slice(2)], {
+  stdio: 'inherit',
+  env: { ...process.env, PYTHONPATH: [root, process.env.PYTHONPATH].filter(Boolean).join(delimiter) },
+});
+for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => child.kill(signal));
+child.on('error', () => { console.error('Alpha: Cannot start Python 3.11+. Set ALPHA_CORE_PYTHON.'); process.exitCode = 1; });
+child.on('exit', (code, signal) => { process.exitCode = code ?? (signal ? 130 : 1); });

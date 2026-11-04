@@ -11,3 +11,8 @@ runs/
 __pycache__/
 *.pyc
 .venv/
+
+build/
+dist/
+*.egg-info/
+.mypy_cache/

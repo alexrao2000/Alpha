@@ -33,11 +33,10 @@ This is one trial per game with a Codex-backed model adapter. The upstream crew 
 
 ## Run the prototype
 
-The experiment runner has no third-party dependencies and works with Node.js 20 or newer. The optional eve runtime requires Node.js 24 or newer.
+The experiment engine, CLI, model transport, and HTML report renderer use Python 3.11 or newer with no third-party runtime dependencies. Run these commands from the repository checkout. Node.js 24 or newer is needed only for the optional eve agent-authoring runtime.
 
 ```sh
-cd /Users/alexr/Alpha
-node src/cli.mjs experiment --backend fixture
+python3 -m alpha experiment --backend fixture
 ```
 
 Open the generated `report.html` in the output directory. The report includes discovery comparisons, a frozen holdout candidate, a proposed configuration patch, and expandable per-role inputs, outputs, tool events, and final states. It works as a standalone file; no server is needed.
@@ -49,7 +48,7 @@ The checked-in demonstration is [examples/fixture/report.html](examples/fixture/
 Install the Codex CLI and sign in with your existing account. Alpha invokes the CLI through its documented `exec` command; it never reads or copies authentication files.
 
 ```sh
-node src/cli.mjs experiment --backend codex --limit 2 --trials 1 \
+python3 -m alpha experiment --backend codex --limit 2 --trials 1 \
   --variants without-planner,without-policy
 ```
 
@@ -57,7 +56,7 @@ node src/cli.mjs experiment --backend codex --limit 2 --trials 1 \
 
 Each role is a separate model request with isolated context and structured JSON output. The backend uses an ephemeral, read-only temporary working directory and rejects a trial if the model attempts a shell, web, file-change, or MCP tool action. Only the local host executes the simulated order tools. Nothing connects to a real support or payment account.
 
-CLI options include `--model`, `--limit`, `--trials`, `--variants`, `--concurrency`, and `--out`. Use `node src/cli.mjs help` for details. A full live experiment can make hundreds of requests. Begin with the small command above. Roles within a workflow run sequentially. Use `--concurrency 3` to evaluate independent workflows together; each still has its own state. Trial/variant order rotates to reduce a fixed ordering bias. This does not eliminate service-load or caching effects.
+CLI options include `--model`, `--limit`, `--trials`, `--variants`, `--concurrency`, and `--out`. Use `python3 -m alpha experiment --help` for details. A full live experiment can make hundreds of requests. Begin with the small command above. Roles within a workflow run sequentially. Use `--concurrency 3` to evaluate independent workflows together; each still has its own state. Trial/variant order rotates to reduce a fixed ordering bias. This does not eliminate service-load or caching effects.
 
 Live reports record the usage events returned by the CLI. Input tokens include cached input, which is also reported separately. Alpha does not convert usage into billed dollars. Latency includes process startup. Without `--model`, model identity is labeled as the CLI default rather than a verified provider identity.
 
@@ -81,6 +80,8 @@ The root and five specialists are authored as an [eve project](https://eve.dev/d
 
 After installing framework dependencies, `npm run build -- --skip-sandbox-prewarm` validates the eve project without preparing a deployment sandbox and `npm run dev` opens its interactive runtime. The default eve manifests use an AI Gateway model string; authentication is managed by eve. The benchmark can run without installing eve or configuring a new provider account.
 
+The Python engine lives in [alpha/](alpha/). Typed contracts describe runs, model usage, variants, and experiment results. External fleets run in separate processes so pinned dependencies and mutable framework state remain isolated. The native Python fleet calls the Python model transport directly. Browser JavaScript handles only report filtering and downloads. The old `node src/cli.mjs` command remains a thin compatibility launcher.
+
 The selected role list lives in [fleet.config.json](fleet.config.json). Proposed patches apply to that file, and the CLI reads it on its next experiment. Alpha never applies the proposed patch automatically. It currently proposes role removal only; prompt rewrites, model routing, parallelization, and arbitrary code surgery are outside this prototype.
 
 ## Experiment boundaries
@@ -95,15 +96,19 @@ The selected role list lives in [fleet.config.json](fleet.config.json). Proposed
 ## Checks
 
 ```sh
-npm test
-npm run demo
+python3 -m unittest discover -s test -p '*_test.py' -v
+python3 -m alpha experiment --backend fixture
 git apply --check examples/fixture/proposal.patch
 ```
+
+The existing `npm test`, `npm run demo`, `npm run live`, and `npm run external` commands launch Python. Set `ALPHA_CORE_PYTHON` to choose their interpreter. You can also install the package with `python3 -m pip install .` and use the `alpha` command.
 
 Tests cover state isolation, hidden expected outcomes, downstream reexecution, positive and negative controls, paired comparisons, selection leakage, provider failures, malformed responses, configuration changes, and HTML escaping.
 
 ## Open-source options considered
 
-[AutoGen](https://github.com/microsoft/autogen) provides substantial multi-agent examples, and [τ-bench](https://github.com/sierra-research/tau2-bench) provides richer tool-agent-user environments. Neither was copied into Alpha. Building the small fleet gave us a controlled first test without installing a large application or running a second user-simulator model. Integrating an independently maintained fleet or benchmark is the next external validation step.
+[AutoGen](https://github.com/microsoft/autogen) provides substantial multi-agent examples, and [τ-bench](https://github.com/sierra-research/tau2-bench) provides richer tool-agent-user environments. Neither was copied into Alpha. Building the small fleet gave us a controlled first test without installing a large application or running a second user-simulator model. The independent fleet integration above is the first external validation step; broader fleets and benchmarks remain future work.
+
+The checked-in measured runs predate the Python migration and retain their original evidence and adapter digests. Migration checks compare all 256 scripted workflows against the saved JavaScript fixture and exercise the native fleet with a scripted transport; they are not new model-performance measurements.
 
 Alpha's own code and authored cases are MIT licensed. Dependency licenses remain their own.

@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alpha-agent-lab"
+version = "0.1.0"
+description = "Measure the contribution of individual agent steps to completed work."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = []
+
+[project.scripts]
+alpha = "alpha.cli:main"
+
+[tool.setuptools]
+packages = ["alpha"]
+
+[tool.setuptools.package-data]
+alpha = ["templates/*.html"]
+
+[tool.setuptools.data-files]
+"share/alpha-agent-lab" = ["fleet.config.json"]
+"share/alpha-agent-lab/agent" = ["agent/instructions.md"]
+"share/alpha-agent-lab/agent/subagents/planner" = ["agent/subagents/planner/instructions.md"]
+"share/alpha-agent-lab/agent/subagents/policy" = ["agent/subagents/policy/instructions.md"]
+"share/alpha-agent-lab/agent/subagents/researcher" = ["agent/subagents/researcher/instructions.md"]
+"share/alpha-agent-lab/agent/subagents/resolver" = ["agent/subagents/resolver/instructions.md"]
+"share/alpha-agent-lab/agent/subagents/reviewer" = ["agent/subagents/reviewer/instructions.md"]
+"share/alpha-agent-lab/data" = ["data/cases.json"]
+"share/alpha-agent-lab/integrations/crewai-game-builder" = ["integrations/crewai-game-builder/NOTICE", "integrations/crewai-game-builder/README.md", "integrations/crewai-game-builder/cases.json", "integrations/crewai-game-builder/fleet.config.json", "integrations/crewai-game-builder/grade.py", "integrations/crewai-game-builder/provenance.json", "integrations/crewai-game-builder/requirements.lock", "integrations/crewai-game-builder/requirements.txt", "integrations/crewai-game-builder/worker.py"]
+"share/alpha-agent-lab/integrations/crewai-game-builder/upstream" = ["integrations/crewai-game-builder/upstream/README.md", "integrations/crewai-game-builder/upstream/pyproject.toml"]
+"share/alpha-agent-lab/integrations/crewai-game-builder/upstream/src/game_builder_crew" = ["integrations/crewai-game-builder/upstream/src/game_builder_crew/__init__.py", "integrations/crewai-game-builder/upstream/src/game_builder_crew/crew.py"]
+"share/alpha-agent-lab/integrations/crewai-game-builder/upstream/src/game_builder_crew/config" = ["integrations/crewai-game-builder/upstream/src/game_builder_crew/config/agents.yaml", "integrations/crewai-game-builder/upstream/src/game_builder_crew/config/tasks.yaml"]
+
+[tool.mypy]
+python_version = "3.11"
+check_untyped_defs = true

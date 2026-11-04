@@ -49,9 +49,9 @@ with tempfile.TemporaryDirectory(prefix="alpha-crew-") as state_dir:
             started = time.monotonic()
             print(f"ALPHA_MODEL {self.alpha_role} start {total_calls[0]}", file=sys.stderr, flush=True)
             result = subprocess.run(
-                [request["node"], str(ROOT / "src" / "model-bridge.mjs")],
-                input=json.dumps({"messages": snapshot, "model": request.get("model")}),
-                text=True, capture_output=True, timeout=135,
+                [request["python"], "-m", "alpha.model_bridge"],
+                input=json.dumps({"messages": snapshot, "model": request.get("model"), "model_binary": request.get("model_binary", "codex")}),
+                text=True, capture_output=True, timeout=135, cwd=ROOT,
             )
             elapsed = (time.monotonic() - started) * 1000
             if result.returncode:
