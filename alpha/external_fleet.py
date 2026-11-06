@@ -15,6 +15,7 @@ from typing import cast
 
 from .contracts import JSON, ROOT, Run, Verdict, compact_json
 from .processes import run_process
+from .accounting import JOB
 
 HOME = ROOT / "integrations/crewai-game-builder"
 
@@ -49,7 +50,7 @@ def load_external_fleet() -> JSON:
 
 
 async def run_python(python: str, script: Path, data: JSON, signal: asyncio.Event | None, timeout: float) -> JSON:
-    env = {**os.environ, "OTEL_SDK_DISABLED": "true", "CREWAI_TELEMETRY_ENABLED": "false", "LITELLM_LOCAL_MODEL_COST_MAP": "True"}
+    env = {**os.environ, "PYTHONPATH": os.pathsep.join(filter(None, [str(Path(__file__).resolve().parent.parent), os.environ.get("PYTHONPATH")])), "OTEL_SDK_DISABLED": "true", "CREWAI_TELEMETRY_ENABLED": "false", "LITELLM_LOCAL_MODEL_COST_MAP": "True"}
     stdout = await run_process([python, str(script)], compact_json(data), timeout=timeout, signal=signal,
                                env=env, label="External runtime")
     try:
@@ -72,7 +73,8 @@ async def run_external_case(*, test_case: JSON, variant: JSON, backend, trial: i
     try:
         returned = await run_python(python, HOME / "worker.py", {"roles": variant["roles"], "input": test_case["input"],
                                   "model": backend.requested_model, "python": sys.executable,
-                                  "model_binary": backend.binary, "max_calls": 12}, signal, 900)
+                                  "model_binary": backend.binary, "max_calls": 12, "gateway": (JOB.get() or {}).get("gateway"),
+                                  "models": variant.get("models", {}), "prompt_overrides": variant.get("prompt_overrides", {})}, signal, 900)
         if (not isinstance(returned.get("trace"), list) or not isinstance(returned.get("artifact"), str)
                 or not isinstance(returned.get("tasks"), list)):
             raise RuntimeError("External runtime returned invalid workflow data.")

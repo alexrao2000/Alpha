@@ -14,6 +14,17 @@ from alpha.contracts import ROOT
 
 
 class CliTests(unittest.TestCase):
+    def test_custom_adapter_cli_resume_restores_configuration(self):
+        with tempfile.TemporaryDirectory() as directory:
+            command = [sys.executable, '-m', 'alpha', 'experiment']
+            first = subprocess.run(command + ['--adapter', 'examples/adapter/adapter.json', '--trials', '1', '--out', directory],
+                                   cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(first.returncode, 0, first.stderr)
+            journal = (Path(directory)/'progress.jsonl').read_bytes()
+            second = subprocess.run(command + ['--resume', directory], cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(second.returncode, 0, second.stderr)
+            self.assertEqual(journal, (Path(directory)/'progress.jsonl').read_bytes())
+
     def test_fixture_cli_journals_runs_and_leaves_configuration_unchanged(self):
         configuration = (ROOT / 'fleet.config.json').read_bytes()
         with tempfile.TemporaryDirectory() as directory:

@@ -1,8 +1,18 @@
 # Alpha
 
-Alpha is a local prototype for measuring the value of individual steps in an agent fleet. It runs a complete workflow, removes roles, reexecutes the remaining workflow, and proposes a smaller configuration when it observes no regression.
+Alpha is a local prototype for measuring the value of individual steps in an agent fleet. It reexecutes complete workflows from fresh state, compares candidate changes, freezes the choices on discovery tasks, and measures their quality, cost, and latency on holdout tasks. Statistical uncertainty can make the result inconclusive.
 
 The first fleet handles simulated customer support. Its five roles are **planner → researcher → policy → resolver → reviewer**. Each role has its own prompt and output contract. Research chooses an order to look up; the host executes that tool. The final proposed action changes a fresh local order database. An independent grader checks the resulting state.
+
+## New experiment capabilities
+
+- **Uncertainty-aware decisions:** exact task-level confidence bounds, repeated trials, imperfect baselines, and explicit inconclusive results.
+- **Bring your own fleet:** a command adapter protocol with separate workflow and grader processes, plus three pinned native workflows.
+- **Richer candidates:** role removal, deterministic or conditional review, prompt and context changes, per-role model routing, and combinations.
+- **Tradeoffs:** frozen cheapest, fastest, and highest-quality choices, a validated frontier, cached tokens, failed attempts, and explicit price estimates.
+- **Long runs:** shared request, observed-token, and deadline budgets; durable checkpoints; explicit hash-checked resume.
+
+See the [experiment guide](docs/experiments.md) and [adapter protocol](docs/adapters.md). Try the expanded scripted search with `python3 -m alpha experiment --backend fixture --search expanded`. These tests remain scripted; they do not establish model savings.
 
 ## Test an independently built fleet
 
@@ -13,7 +23,7 @@ npm run setup:external
 npm run external
 ```
 
-The experiment compares the original crew with removal of either review role, selects on four discovery games, and tests the fixed candidate on four different holdout games. Generated programs are checked by executable input/output tests. See the [adapter documentation](integrations/crewai-game-builder/README.md) for setup, provenance, model-transport differences, and limits. The original support fleet below remains a scripted development example.
+The experiment compares the original crew with removal of either review role, selects on four discovery games, and tests the fixed candidate on four different holdout games. Generated programs are checked by executable input/output tests. See the [adapter documentation](integrations/crewai-game-builder/README.md) for setup, provenance, model-transport differences, and limits. Two additional pinned native examples cover [language handoffs](integrations/swarm-handoff/README.md) and a [writing/review retry loop](integrations/crewai-self-review/README.md). Both use the same optional native environment and shared model gateway. The original support fleet below remains a scripted development example.
 
 ## Measured upstream results
 
@@ -58,7 +68,7 @@ Each role is a separate model request with isolated context and structured JSON 
 
 CLI options include `--model`, `--limit`, `--trials`, `--variants`, `--concurrency`, and `--out`. Use `python3 -m alpha experiment --help` for details. A full live experiment can make hundreds of requests. Begin with the small command above. Roles within a workflow run sequentially. Use `--concurrency 3` to evaluate independent workflows together; each still has its own state. Trial/variant order rotates to reduce a fixed ordering bias. This does not eliminate service-load or caching effects.
 
-Live reports record the usage events returned by the CLI. Input tokens include cached input, which is also reported separately. Alpha does not convert usage into billed dollars. Latency includes process startup. Without `--model`, model identity is labeled as the CLI default rather than a verified provider identity.
+Live reports record the usage events returned by the CLI. Input tokens include cached input, which is also reported separately. Optional supplied prices produce estimates that distinguish cached input, output, and chargeable tools. Billing dollars remain unknown. Latency includes process startup. Without `--model`, model identity is labeled as the CLI default rather than a verified provider identity.
 
 ## First measured results
 
@@ -82,13 +92,13 @@ After installing framework dependencies, `npm run build -- --skip-sandbox-prewar
 
 The Python engine lives in [alpha/](alpha/). Typed contracts describe runs, model usage, variants, and experiment results. External fleets run in separate processes so pinned dependencies and mutable framework state remain isolated. The native Python fleet calls the Python model transport directly. Browser JavaScript handles only report filtering and downloads. The old `node src/cli.mjs` command remains a thin compatibility launcher.
 
-The selected role list lives in [fleet.config.json](fleet.config.json). Proposed patches apply to that file, and the CLI reads it on its next experiment. Alpha never applies the proposed patch automatically. It currently proposes role removal only; prompt rewrites, model routing, parallelization, and arbitrary code surgery are outside this prototype.
+The selected role list lives in [fleet.config.json](fleet.config.json). Proposed patches apply to that file, and the CLI reads it on its next experiment. Alpha never applies the proposed patch automatically. Advanced candidate recipes are recorded in `candidate-config.json` and can be reused with `--candidates`. Arbitrary code surgery and automatic parallelization remain outside the built-in search.
 
 ## Experiment boundaries
 
 - **32 authored cases:** 16 discovery and 16 holdout cases cover refund windows, partial and excessive requests, cancellation states, ownership mismatches, risk escalation, and missing orders.
-- **Selection:** evaluate baseline and all candidate variants on discovery. Require a clean, fully passing baseline, no paired regression, no unsafe outcome, and no execution error. Rank eligible candidates by measured tokens per successful task, or role invocations in fixture mode.
-- **Holdout:** freeze the selected candidate before evaluating the baseline and candidate on holdout. Holdout outcomes cannot change which candidate was selected.
+- **Selection:** evaluate baseline and all candidate variants on discovery. Allow an imperfect baseline while excluding unsafe, failed, zero-quality, or out-of-tolerance candidates. Rank by the predeclared objective, then freeze all eligible recipes and discovery labels.
+- **Holdout:** freeze the primary choice and eligible candidate set before evaluating them against the baseline on holdout. Decisions use simultaneous task-level confidence bounds; insufficient evidence is inconclusive. Holdout cannot select a new winner.
 - **State checks:** verify disposition, ticket state, refund amount and count, refund target, and order states. Role messages do not contain expected answers. The action tool deliberately does not enforce business eligibility, so it cannot conceal a broken policy step.
 - **Known construction:** the planner is deliberately redundant. The resolver proposes the requested refund amount, leaving the balance cap to the reviewer. Removing the reviewer therefore exposes excess-refund cases. This is a useful test of Alpha's mechanics, not an independent discovery about an unrelated agent implementation.
 - **Generalization:** the holdout changes values and wording within the same scenario families. Both splits were authored alongside the prototype. Repeated fixture trials are identical; small live samples do not establish production equivalence or a low rare-error rate.
@@ -107,8 +117,10 @@ Tests cover state isolation, hidden expected outcomes, downstream reexecution, p
 
 ## Open-source options considered
 
-[AutoGen](https://github.com/microsoft/autogen) provides substantial multi-agent examples, and [τ-bench](https://github.com/sierra-research/tau2-bench) provides richer tool-agent-user environments. Neither was copied into Alpha. Building the small fleet gave us a controlled first test without installing a large application or running a second user-simulator model. The independent fleet integration above is the first external validation step; broader fleets and benchmarks remain future work.
+[AutoGen](https://github.com/microsoft/autogen) provides substantial multi-agent examples, and [τ-bench](https://github.com/sierra-research/tau2-bench) provides richer tool-agent-user environments. Neither was copied into Alpha. Building the small fleet gave us a controlled first test without installing a large application or running a second user-simulator model. The three native integrations exercise different workflow patterns. Broader independent benchmarks remain future work; all bundled task suites are development data.
 
 The checked-in measured runs predate the Python migration and retain their original evidence and adapter digests. Migration checks compare all 256 scripted workflows against the saved JavaScript fixture and exercise the native fleet with a scripted transport; they are not new model-performance measurements.
 
 Alpha's own code and authored cases are MIT licensed. Dependency licenses remain their own.
+
+Current version-two reports add confidence bounds, frozen tradeoffs, and request accounting. Historical examples stay unchanged and do not acquire stronger statistical claims from the new implementation.

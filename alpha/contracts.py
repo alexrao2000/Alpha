@@ -18,6 +18,11 @@ class Variant(TypedDict):
     id: str
     label: str
     roles: list[str]
+    models: NotRequired[dict[str, str]]
+    prompt_overrides: NotRequired[dict[str, str]]
+    drop_context: NotRequired[dict[str, list[str]]]
+    deterministic: NotRequired[dict[str, str]]
+    conditional: NotRequired[dict[str, str]]
 
 
 class Job(TypedDict):
@@ -36,9 +41,15 @@ class ModelResult(TypedDict):
     output: JSON
     usage: Usage | None
     model_calls: int
+    attempt_id: NotRequired[int]
 
 
 class Step(TypedDict):
+    id: NotRequired[str]
+    parent_ids: NotRequired[list[str]]
+    model: NotRequired[str | None]
+    execution: NotRequired[str]
+    attempt_id: NotRequired[int]
     role: str
     context: JSON
     output: NotRequired[JSON]
@@ -57,6 +68,10 @@ class Verdict(TypedDict):
 
 
 class Run(TypedDict):
+    evaluation_unit: NotRequired[str]
+    attempts: NotRequired[list[JSON]]
+    previous_record_sha256: NotRequired[str]
+    record_sha256: NotRequired[str]
     case_id: str
     category: str
     split: str
@@ -71,6 +86,18 @@ class Run(TypedDict):
 
 
 class Experiment(TypedDict):
+    decision: NotRequired[str]
+    status: NotRequired[str]
+    stop_reason: NotRequired[str | None]
+    policy: NotRequired[JSON]
+    assessments: NotRequired[JSON]
+    frozen_candidates: NotRequired[list[str]]
+    recommendations: NotRequired[JSON]
+    tradeoffs: NotRequired[list[JSON]]
+    frontier: NotRequired[list[str]]
+    accounting: NotRequired[JSON]
+    attempts: NotRequired[list[JSON]]
+    manifest_sha256: NotRequired[str]
     version: int
     id: str
     created_at: str

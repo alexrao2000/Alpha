@@ -29,7 +29,7 @@ with tempfile.TemporaryDirectory(prefix="alpha-crew-") as state_dir:
 
     class RecordingLLM(BaseLLM):
         def __init__(self, role):
-            super().__init__(model=request.get("model") or "codex-cli-default", temperature=0)
+            super().__init__(model=request.get("models", {}).get(role) or request.get("model") or "codex-cli-default", temperature=0)
             self.alpha_role = role
 
         def supports_function_calling(self):
@@ -50,7 +50,7 @@ with tempfile.TemporaryDirectory(prefix="alpha-crew-") as state_dir:
             print(f"ALPHA_MODEL {self.alpha_role} start {total_calls[0]}", file=sys.stderr, flush=True)
             result = subprocess.run(
                 [request["python"], "-m", "alpha.model_bridge"],
-                input=json.dumps({"messages": snapshot, "model": request.get("model"), "model_binary": request.get("model_binary", "codex")}),
+                input=json.dumps({"messages": snapshot, "model": request.get("model"), "model_binary": request.get("model_binary", "codex"), "gateway": request.get("gateway"), "role": self.alpha_role}),
                 text=True, capture_output=True, timeout=135, cwd=ROOT,
             )
             elapsed = (time.monotonic() - started) * 1000
@@ -62,7 +62,8 @@ with tempfile.TemporaryDirectory(prefix="alpha-crew-") as state_dir:
             reply = json.loads(result.stdout)
             traces.append({"role": self.alpha_role, "context": {"messages": snapshot},
                            "output": {"response": reply["response"]}, "elapsed_ms": elapsed,
-                           "usage": reply["usage"], "model_calls": reply["model_calls"]})
+                           "usage": reply["usage"], "model_calls": reply["model_calls"], "attempt_id": reply.get("attempt_id"),
+                           "id": f"step-{len(traces)}", "parent_ids": [f"step-{len(traces)-1}"] if traces else [], "model": self.model})
             print(f"ALPHA_MODEL {self.alpha_role} done", file=sys.stderr, flush=True)
             return reply["response"]
 
@@ -74,6 +75,8 @@ with tempfile.TemporaryDirectory(prefix="alpha-crew-") as state_dir:
 
     def configured_agent(*args, **kwargs):
         role = role_map[kwargs["config"]["role"].strip()]
+        if role in request.get("prompt_overrides", {}):
+            kwargs["config"] = {**kwargs["config"], "goal": request["prompt_overrides"][role]}
         return Agent(*args, llm=RecordingLLM(role), **kwargs)
 
     upstream.Agent = configured_agent

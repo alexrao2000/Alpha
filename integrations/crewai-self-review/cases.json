@@ -1,0 +1,98 @@
+[
+  {
+    "id": "discovery-0",
+    "split": "discovery",
+    "category": "Short-form writing",
+    "input": {
+      "topic": "flying cars"
+    },
+    "initial": {},
+    "expected": {
+      "topic": "flying cars"
+    }
+  },
+  {
+    "id": "discovery-1",
+    "split": "discovery",
+    "category": "Short-form writing",
+    "input": {
+      "topic": "electric bikes"
+    },
+    "initial": {},
+    "expected": {
+      "topic": "electric bikes"
+    }
+  },
+  {
+    "id": "discovery-2",
+    "split": "discovery",
+    "category": "Short-form writing",
+    "input": {
+      "topic": "paper maps"
+    },
+    "initial": {},
+    "expected": {
+      "topic": "paper maps"
+    }
+  },
+  {
+    "id": "discovery-3",
+    "split": "discovery",
+    "category": "Short-form writing",
+    "input": {
+      "topic": "robot chefs"
+    },
+    "initial": {},
+    "expected": {
+      "topic": "robot chefs"
+    }
+  },
+  {
+    "id": "holdout-4",
+    "split": "holdout",
+    "category": "Short-form writing",
+    "input": {
+      "topic": "solar roofs"
+    },
+    "initial": {},
+    "expected": {
+      "topic": "solar roofs"
+    }
+  },
+  {
+    "id": "holdout-5",
+    "split": "holdout",
+    "category": "Short-form writing",
+    "input": {
+      "topic": "night trains"
+    },
+    "initial": {},
+    "expected": {
+      "topic": "night trains"
+    }
+  },
+  {
+    "id": "holdout-6",
+    "split": "holdout",
+    "category": "Short-form writing",
+    "input": {
+      "topic": "space gardens"
+    },
+    "initial": {},
+    "expected": {
+      "topic": "space gardens"
+    }
+  },
+  {
+    "id": "holdout-7",
+    "split": "holdout",
+    "category": "Short-form writing",
+    "input": {
+      "topic": "quiet libraries"
+    },
+    "initial": {},
+    "expected": {
+      "topic": "quiet libraries"
+    }
+  }
+]

@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "id": "example",
+  "name": "Scripted adapter example",
+  "scripted": true,
+  "cases": "cases.json",
+  "variants": [
+    {
+      "id": "baseline",
+      "label": "Both stages",
+      "roles": [
+        "normalize",
+        "format"
+      ]
+    },
+    {
+      "id": "without-normalize",
+      "label": "Omit normalization",
+      "roles": [
+        "format"
+      ]
+    }
+  ],
+  "runner": [
+    "{python}",
+    "worker.py"
+  ],
+  "grader": [
+    "{python}",
+    "grader.py"
+  ],
+  "files": [
+    "worker.py",
+    "grader.py",
+    "cases.json"
+  ],
+  "capabilities": []
+}

@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "id": "crewai-self-review",
+  "name": "Native Crewai Self Review",
+  "cases": "cases.json",
+  "variants": [
+    {
+      "id": "baseline",
+      "label": "Original native writing/review loop",
+      "roles": [
+        "shakespearean_bard",
+        "x_post_verifier"
+      ]
+    },
+    {
+      "id": "structural-review",
+      "label": "Deterministic structural review",
+      "roles": [
+        "shakespearean_bard",
+        "x_post_verifier"
+      ],
+      "deterministic": {
+        "x_post_verifier": "structural-post"
+      }
+    },
+    {
+      "id": "conditional-review",
+      "label": "Review only malformed posts",
+      "roles": [
+        "shakespearean_bard",
+        "x_post_verifier"
+      ],
+      "conditional": {
+        "x_post_verifier": "structural-post"
+      }
+    }
+  ],
+  "runner": [
+    "{fleet_python}",
+    "worker.py"
+  ],
+  "grader": [
+    "{python}",
+    "grader.py"
+  ],
+  "files": [
+    "worker.py",
+    "grader.py",
+    "cases.json",
+    "provenance.json",
+    "NOTICE",
+    "upstream/flows/self_evaluation_loop_flow/README.md",
+    "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/__init__.py",
+    "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/crews/shakespeare_crew/config/agents.yaml",
+    "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/crews/shakespeare_crew/config/tasks.yaml",
+    "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/crews/shakespeare_crew/shakespeare_crew.py",
+    "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/crews/x_post_review_crew/config/agents.yaml",
+    "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/crews/x_post_review_crew/config/tasks.yaml",
+    "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/crews/x_post_review_crew/x_post_review_crew.py",
+    "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/main.py",
+    "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/tools/CharacterCounterTool.py",
+    "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/tools/__init__.py"
+  ],
+  "pins": {
+    "upstream/flows/self_evaluation_loop_flow/README.md": "8754fbe8b45ae2a70d4fb55f7c069dcd320110201f5c209b9b82c091fbaf62aa",
+    "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/crews/shakespeare_crew/config/agents.yaml": "9cdb597f23a93ac561c7eca4d09cd2a5d13dd4308f057cd71c9e2dec8ecacf06",
+    "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/crews/shakespeare_crew/config/tasks.yaml": "e69c599b81d5279995a057d7ca0cd1926cba79787a9741fa8879abf441838c9d",
+    "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/crews/shakespeare_crew/shakespeare_crew.py": "a51bfe1766e8ae6a0a0a8519a0464db388599de231a71a2a44eb7618d95352c2",
+    "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/crews/x_post_review_crew/config/agents.yaml": "2ef6efb5713f1a6c783e5a7a275d2f3094fe4f31c735d7c2c5e791c8fe753d42",
+    "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/crews/x_post_review_crew/config/tasks.yaml": "ceaec4e01bd2bdd311517e07f3f3e242735c0b359c342904fc3b09826a43c583",
+    "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/crews/x_post_review_crew/x_post_review_crew.py": "4a1a83f6e3a1e438428328994bbc0f075795df14f6fcdbaf00afea96e8b41723",
+    "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/main.py": "e5f5d55afb006a41ea7ac3a12ae26dd4721c3dd53bb19691266a45d22736ef1a",
+    "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/tools/CharacterCounterTool.py": "8a60a46c03640a395f3c9e8f59d99f8b7286110b4c9177d24c0f5396a3421942",
+    "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/tools/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "capabilities": [
+    "models",
+    "prompt_overrides",
+    "deterministic",
+    "conditional"
+  ],
+  "rules": {
+    "x_post_verifier": [
+      "structural-post"
+    ]
+  },
+  "provenance": {
+    "repository": "https://github.com/crewAIInc/crewAI-examples",
+    "commit": "da94a91e691e1cf5b3151416bb15b5b62729bea8",
+    "files": [
+      {
+        "path": "upstream/flows/self_evaluation_loop_flow/README.md",
+        "sha256": "8754fbe8b45ae2a70d4fb55f7c069dcd320110201f5c209b9b82c091fbaf62aa"
+      },
+      {
+        "path": "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/__init__.py",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/crews/shakespeare_crew/config/agents.yaml",
+        "sha256": "9cdb597f23a93ac561c7eca4d09cd2a5d13dd4308f057cd71c9e2dec8ecacf06"
+      },
+      {
+        "path": "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/crews/shakespeare_crew/config/tasks.yaml",
+        "sha256": "e69c599b81d5279995a057d7ca0cd1926cba79787a9741fa8879abf441838c9d"
+      },
+      {
+        "path": "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/crews/shakespeare_crew/shakespeare_crew.py",
+        "sha256": "a51bfe1766e8ae6a0a0a8519a0464db388599de231a71a2a44eb7618d95352c2"
+      },
+      {
+        "path": "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/crews/x_post_review_crew/config/agents.yaml",
+        "sha256": "2ef6efb5713f1a6c783e5a7a275d2f3094fe4f31c735d7c2c5e791c8fe753d42"
+      },
+      {
+        "path": "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/crews/x_post_review_crew/config/tasks.yaml",
+        "sha256": "ceaec4e01bd2bdd311517e07f3f3e242735c0b359c342904fc3b09826a43c583"
+      },
+      {
+        "path": "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/crews/x_post_review_crew/x_post_review_crew.py",
+        "sha256": "4a1a83f6e3a1e438428328994bbc0f075795df14f6fcdbaf00afea96e8b41723"
+      },
+      {
+        "path": "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/main.py",
+        "sha256": "e5f5d55afb006a41ea7ac3a12ae26dd4721c3dd53bb19691266a45d22736ef1a"
+      },
+      {
+        "path": "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/tools/CharacterCounterTool.py",
+        "sha256": "8a60a46c03640a395f3c9e8f59d99f8b7286110b4c9177d24c0f5396a3421942"
+      },
+      {
+        "path": "upstream/flows/self_evaluation_loop_flow/src/self_evaluation_loop_flow/tools/__init__.py",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "adaptations": [
+      "Inject the existing CLI model transport through Alpha\u2019s gateway; retain native runtime control flow.",
+      "Replace the flow\u2019s hardcoded topic with the task\u2019s visible topic.",
+      "Alias the deprecated crewai_tools.BaseTool import to crewai.tools.BaseTool; retain the original counter implementation.",
+      "Candidate recipes may replace or gate the verifier with structural checks; baseline retains the native reviewer and retry loop."
+    ]
+  },
+  "timeout_seconds": 900,
+  "scripted": false,
+  "dataset_description": "Alpha-authored development cases; different visible inputs in discovery and holdout, not an independent benchmark."
+}

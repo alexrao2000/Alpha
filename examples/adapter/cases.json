@@ -1,0 +1,54 @@
+[
+  {
+    "id": "discovery-0",
+    "split": "discovery",
+    "input": {
+      "text": "  HELLO  world"
+    },
+    "initial": {
+      "files": {
+        "counter.txt": "0"
+      }
+    },
+    "expected": "[hello world]"
+  },
+  {
+    "id": "discovery-1",
+    "split": "discovery",
+    "input": {
+      "text": " Good DAY "
+    },
+    "initial": {
+      "files": {
+        "counter.txt": "0"
+      }
+    },
+    "expected": "[good day]"
+  },
+  {
+    "id": "holdout-0",
+    "split": "holdout",
+    "input": {
+      "text": " FRESH  world "
+    },
+    "initial": {
+      "files": {
+        "counter.txt": "0"
+      }
+    },
+    "expected": "[fresh world]"
+  },
+  {
+    "id": "holdout-1",
+    "split": "holdout",
+    "input": {
+      "text": " AnoTHER  Day "
+    },
+    "initial": {
+      "files": {
+        "counter.txt": "0"
+      }
+    },
+    "expected": "[another day]"
+  }
+]

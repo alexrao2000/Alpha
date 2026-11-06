@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "id": "swarm-handoff",
+  "name": "Native Swarm Handoff",
+  "cases": "cases.json",
+  "variants": [
+    {
+      "id": "baseline",
+      "label": "Original native handoff",
+      "roles": [
+        "english",
+        "spanish"
+      ]
+    },
+    {
+      "id": "without-spanish",
+      "label": "Remove Spanish handoff target",
+      "roles": [
+        "english"
+      ]
+    }
+  ],
+  "runner": [
+    "{fleet_python}",
+    "worker.py"
+  ],
+  "grader": [
+    "{python}",
+    "grader.py"
+  ],
+  "files": [
+    "worker.py",
+    "grader.py",
+    "cases.json",
+    "provenance.json",
+    "NOTICE",
+    "upstream/swarm/__init__.py",
+    "upstream/swarm/core.py",
+    "upstream/swarm/types.py",
+    "upstream/swarm/util.py",
+    "upstream/examples/basic/agent_handoff.py",
+    "upstream/LICENSE",
+    "upstream/README.md"
+  ],
+  "pins": {
+    "upstream/swarm/__init__.py": "27a5a4284ef143567d928ba5f7bad4082df42cc55efbc4e1dabf6cd7799b6bb9",
+    "upstream/swarm/core.py": "b393be51475f83aa185a84f19c6a9ee35abe62a52738aa3e5547ee301e13e881",
+    "upstream/swarm/types.py": "871eb1e477e7e0c004f4d7bdc3336a1c4c902867cef5ba1e1d72d4440c68b848",
+    "upstream/swarm/util.py": "0f2539e5b32d06a7480d2fcde8e56a3ff40d50ce83870831eded59271d57ac4a",
+    "upstream/examples/basic/agent_handoff.py": "8a6686e93f7320282fa3879d25e39ebd099419e0b43094f504fc5e16cd612767",
+    "upstream/LICENSE": "d831db55645e47ca8e491c5a0e37f1ee744d7b10bf5aa8d50146c795ac0176c0",
+    "upstream/README.md": "59245018ba7a6681c116b503428bf573b78494aaaeab7c29ea54d65c901ef3eb"
+  },
+  "capabilities": [
+    "models",
+    "prompt_overrides"
+  ],
+  "rules": {},
+  "provenance": {
+    "repository": "https://github.com/openai/swarm",
+    "commit": "6af0b4caf37dca4526dfd98e9fbd8ce36e7eeb22",
+    "files": [
+      {
+        "path": "upstream/swarm/__init__.py",
+        "sha256": "27a5a4284ef143567d928ba5f7bad4082df42cc55efbc4e1dabf6cd7799b6bb9"
+      },
+      {
+        "path": "upstream/swarm/core.py",
+        "sha256": "b393be51475f83aa185a84f19c6a9ee35abe62a52738aa3e5547ee301e13e881"
+      },
+      {
+        "path": "upstream/swarm/types.py",
+        "sha256": "871eb1e477e7e0c004f4d7bdc3336a1c4c902867cef5ba1e1d72d4440c68b848"
+      },
+      {
+        "path": "upstream/swarm/util.py",
+        "sha256": "0f2539e5b32d06a7480d2fcde8e56a3ff40d50ce83870831eded59271d57ac4a"
+      },
+      {
+        "path": "upstream/examples/basic/agent_handoff.py",
+        "sha256": "8a6686e93f7320282fa3879d25e39ebd099419e0b43094f504fc5e16cd612767"
+      },
+      {
+        "path": "upstream/LICENSE",
+        "sha256": "d831db55645e47ca8e491c5a0e37f1ee744d7b10bf5aa8d50146c795ac0176c0"
+      },
+      {
+        "path": "upstream/README.md",
+        "sha256": "59245018ba7a6681c116b503428bf573b78494aaaeab7c29ea54d65c901ef3eb"
+      }
+    ],
+    "adaptations": [
+      "Inject the existing CLI model transport through Alpha\u2019s gateway; retain native runtime control flow.",
+      "Defer the example\u2019s import-time demonstration; run user-supplied messages through its original agents and handoff function.",
+      "Removing the Spanish role removes its handoff function; native runtime tool dispatch remains unchanged."
+    ]
+  },
+  "timeout_seconds": 900,
+  "scripted": false,
+  "dataset_description": "Alpha-authored development cases; different visible inputs in discovery and holdout, not an independent benchmark."
+}

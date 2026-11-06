@@ -1,1 +1,1 @@
-integrations/crewai-game-builder/upstream/** -text -whitespace
+integrations/**/upstream/** -text -whitespace

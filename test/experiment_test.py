@@ -25,7 +25,9 @@ class ExperimentTests(unittest.IsolatedAsyncioTestCase):
 
     def test_discovery_selects_planner_removal_and_frozen_holdout_confirms(self):
         self.assertEqual(DEMO['selected'], 'without-planner')
-        self.assertTrue(DEMO['validated'])
+        self.assertFalse(DEMO['validated'])
+        self.assertEqual(DEMO['decision'], 'scripted')
+        self.assertTrue(DEMO['assessments'][DEMO['selected']]['functional_passed'])
         self.assertEqual(DEMO['comparison']['regressions'], [])
         selected = [r for r in DEMO['runs'] if r['split'] == 'holdout' and r['variant'] == DEMO['selected']]
         self.assertEqual(len(selected), 32)
@@ -160,7 +162,7 @@ class ExperimentTests(unittest.IsolatedAsyncioTestCase):
     async def test_bounded_parallel_execution_preserves_pairing_and_selection(self):
         result = await experiment(cases=CASES, prompts=PROMPTS, backend=FIXTURE, trials=1, limit=4, concurrency=3)
         self.assertEqual(result['selected'], 'without-planner')
-        self.assertTrue(result['validated'])
+        self.assertEqual(result['decision'], 'scripted')
         self.assertEqual(len(result['runs']), 32)
 
     def test_report_escapes_markup_and_script_terminators(self):
@@ -174,6 +176,11 @@ class ExperimentTests(unittest.IsolatedAsyncioTestCase):
         embedded = rendered.split('<script type="application/json" id="experiment">')[1].split('</script>')[0]
         self.assertEqual(json.loads(embedded), poisoned)
 
+    def test_report_provenance_does_not_create_executable_links(self):
+        poisoned = deepcopy(DEMO)
+        poisoned['fleet'] = {'id': 'custom', 'name': 'Custom', 'provenance': {'repository': 'javascript:alert(1)', 'commit': 'fake'}}
+        self.assertNotIn('href="javascript:', render_report(poisoned))
+
     def test_all_fixture_evidence_and_digests_match_saved_javascript_run(self):
         original = json.loads((ROOT / 'examples/fixture/experiment.json').read_text())
         original.setdefault('fleet', None)
@@ -184,10 +191,12 @@ class ExperimentTests(unittest.IsolatedAsyncioTestCase):
                 return [stable(v) for v in value]
             return value
         current = deepcopy(DEMO)
-        for report in (original, current):
-            for field in ('id', 'created_at', 'frozen_at'):
-                report.pop(field)
-        self.assertEqual(stable(original), stable(current))
+        for old, new in zip(original['runs'], current['runs'], strict=True):
+            for step in new['trace']:
+                for field in ('id', 'parent_ids', 'model', 'execution', 'attempt_id'):
+                    step.pop(field, None)
+            new = {k: v for k, v in new.items() if k in old}
+            self.assertEqual(stable(old), stable(new))
 
     async def test_backend_mutation_does_not_change_recorded_context(self):
         class Mutating(FixtureBackend):

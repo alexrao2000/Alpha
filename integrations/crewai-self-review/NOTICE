@@ -1,0 +1,7 @@
+The upstream files are copied unchanged from crewAIInc/crewAI-examples,
+commit da94a91e691e1cf5b3151416bb15b5b62729bea8,
+flows/self_evaluation_loop_flow. The selected files contain no explicit license
+declaration. The repository README defers licensing to individual examples.
+Original source and attribution are preserved. Alpha's MIT license covers its
+own adapter code and authored cases; it does not relicense upstream files.
+See provenance.json for file identities and adapter differences.

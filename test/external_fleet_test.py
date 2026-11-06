@@ -75,11 +75,12 @@ class ExternalFleetTests(unittest.IsolatedAsyncioTestCase):
                     'elapsed_ms': 1, 'tools': [], 'final_state': {}}
         backend = CodexBackend(model='test')
         result = await experiment(**fleet, backend=backend, trials=1, concurrency=3, run_task=runner, on_run=journal.append)
-        self.assertEqual(len(result['runs']), 20)
-        self.assertEqual(len(calls), 20)
-        self.assertEqual(len(journal), 20)
-        self.assertTrue(result['validated'])
-        self.assertTrue(all(r['variant'] in ['baseline', result['selected']] for r in result['runs'] if r['split'] == 'holdout'))
+        self.assertEqual(len(result['runs']), 24)
+        self.assertEqual(len(calls), 24)
+        self.assertEqual(len(journal), 24)
+        self.assertFalse(result['validated'])
+        self.assertEqual(result['decision'], 'inconclusive')
+        self.assertTrue(all(r['variant'] in result['frozen_candidates'] for r in result['runs'] if r['split'] == 'holdout'))
 
     def test_external_report_preserves_code_grading_and_provenance(self):
         for path in ['examples/live/experiment.json', 'examples/upstream-game-builder/experiment.json']:

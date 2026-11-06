@@ -1,0 +1,106 @@
+[
+  {
+    "id": "discovery-0",
+    "split": "discovery",
+    "category": "Language handoff",
+    "input": {
+      "message": "Hello. Reply exactly: ready-0-d"
+    },
+    "initial": {},
+    "expected": {
+      "agent": "English Agent",
+      "text": "ready-0-d"
+    }
+  },
+  {
+    "id": "discovery-1",
+    "split": "discovery",
+    "category": "Language handoff",
+    "input": {
+      "message": "Hola. Responde exactamente: listo-1-d"
+    },
+    "initial": {},
+    "expected": {
+      "agent": "Spanish Agent",
+      "text": "listo-1-d"
+    }
+  },
+  {
+    "id": "discovery-2",
+    "split": "discovery",
+    "category": "Language handoff",
+    "input": {
+      "message": "Hello. Reply exactly: ready-2-d"
+    },
+    "initial": {},
+    "expected": {
+      "agent": "English Agent",
+      "text": "ready-2-d"
+    }
+  },
+  {
+    "id": "discovery-3",
+    "split": "discovery",
+    "category": "Language handoff",
+    "input": {
+      "message": "Hola. Responde exactamente: listo-3-d"
+    },
+    "initial": {},
+    "expected": {
+      "agent": "Spanish Agent",
+      "text": "listo-3-d"
+    }
+  },
+  {
+    "id": "holdout-0",
+    "split": "holdout",
+    "category": "Language handoff",
+    "input": {
+      "message": "Hello. Reply exactly: ready-0-h"
+    },
+    "initial": {},
+    "expected": {
+      "agent": "English Agent",
+      "text": "ready-0-h"
+    }
+  },
+  {
+    "id": "holdout-1",
+    "split": "holdout",
+    "category": "Language handoff",
+    "input": {
+      "message": "Hola. Responde exactamente: listo-1-h"
+    },
+    "initial": {},
+    "expected": {
+      "agent": "Spanish Agent",
+      "text": "listo-1-h"
+    }
+  },
+  {
+    "id": "holdout-2",
+    "split": "holdout",
+    "category": "Language handoff",
+    "input": {
+      "message": "Hello. Reply exactly: ready-2-h"
+    },
+    "initial": {},
+    "expected": {
+      "agent": "English Agent",
+      "text": "ready-2-h"
+    }
+  },
+  {
+    "id": "holdout-3",
+    "split": "holdout",
+    "category": "Language handoff",
+    "input": {
+      "message": "Hola. Responde exactamente: listo-3-h"
+    },
+    "initial": {},
+    "expected": {
+      "agent": "Spanish Agent",
+      "text": "listo-3-h"
+    }
+  }
+]

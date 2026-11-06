@@ -12,6 +12,7 @@ import tempfile
 from .contracts import JSON, ModelResult, compact_json
 from .domain import SCHEMAS
 from .processes import run_process
+from .accounting import JOB, Controller
 
 
 class FixtureBackend:
@@ -52,11 +53,16 @@ class CodexBackend:
     name = "codex"
     model: str | None
 
-    def __init__(self, model: str | None = None, timeout: float = 120, binary: str = "codex"):
+    def __init__(self, model: str | None = None, timeout: float = 120, binary: str = "codex", controller: Controller | None = None):
         self.model = model or "CLI default (identity not independently verified)"
         self.requested_model = model
         self.timeout = timeout
         self.binary = binary
+        self.controller = controller
+        self.gateway = None
+
+    def for_model(self, model: str | None):
+        return CodexBackend(model=model, timeout=self.timeout, binary=self.binary, controller=self.controller)
 
     async def call(self, role: str, instructions: str, context: JSON,
                    *, signal: asyncio.Event | None = None) -> ModelResult:
@@ -67,6 +73,11 @@ class CodexBackend:
         return await self.complete(schema=SCHEMAS[role], prompt=prompt, signal=signal)
 
     async def complete(self, *, schema: JSON, prompt: str, signal: asyncio.Event | None = None) -> ModelResult:
+        if self.controller is not None:
+            return await self.controller.call(lambda: self._complete(schema=schema, prompt=prompt, signal=signal), model=self.requested_model, role=(JOB.get() or {}).get("role"))
+        return await self._complete(schema=schema, prompt=prompt, signal=signal)
+
+    async def _complete(self, *, schema: JSON, prompt: str, signal: asyncio.Event | None = None) -> ModelResult:
         with tempfile.TemporaryDirectory(prefix="alpha-role-") as temporary:
             directory = Path(temporary)
             schema_path, output_path = directory / "schema.json", directory / "reply.json"
