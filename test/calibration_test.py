@@ -110,6 +110,7 @@ class CalibrationTests(unittest.TestCase):
             ],
             "methods": ["llm_judge", "pairwise_judge"],
             "model_judgment_calls": 3,
+            "rubric": template["rubric"],
         }
         initial = deepcopy(stored)
         result = calibrate_saved(report, stored, template)
