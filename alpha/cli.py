@@ -22,6 +22,7 @@ from .qualitative import CodexJudge, evaluate, human_review_template, calibrate_
 from .human_review import render_human_review
 from .rubrics import load_rubric, available_rubrics
 from .orchestration import demo as orchestration_demo
+from .worker_runtime import RunStore, load_identities, run_workers
 
 
 def parser() -> argparse.ArgumentParser:
@@ -30,12 +31,28 @@ def parser() -> argparse.ArgumentParser:
     commands.add_parser('help')
     commands.add_parser('adapters', help='List bundled fleets and the user adapter entry point')
     commands.add_parser('rubrics', help='List bundled and operator-defined grading rubric names')
-    orch = commands.add_parser('orch', help='Deterministic subagent scheduling and safety demonstrations')
-    orch.add_argument('mode', choices=('demo',))
+    orch = commands.add_parser('orch', help='Run live agent tasks with durable worker scheduling (or demo)')
+    orch.add_argument('mode', choices=('demo', 'run', 'resume', 'status'))
+    orch.add_argument('task', nargs='?', help='Task prompt for run')
     orch.add_argument('--scenario', choices=('all', 'starvation', 'cycles', 'routing', 'side-effects', 'skills', 'limits'),
                       default='all', help='Which orchestration failure mode to demonstrate')
     orch.add_argument('--out', type=Path, help='Write the full JSON trace to this path')
-    orch.add_argument('--verbose', action='store_true', help='Print all state-transition events')
+    orch.add_argument('--verbose', action='store_true', help='Print task details or demo events')
+    orch.add_argument('--db', type=Path, help='SQLite state path (required for resume/status)')
+    orch.add_argument('--agents', type=Path, help='Identity JSON with per-agent instructions and skill paths')
+    orch.add_argument('--identity', help='Root agent identity; defaults to general or the first configured')
+    orch.add_argument('--workers', type=int, default=2, help='Concurrent real agent calls')
+    orch.add_argument('--tiers', help='Comma-separated worker capacities: small,medium,large')
+    orch.add_argument('--model', help='Model to use for all task sizes (default: Codex CLI default)')
+    orch.add_argument('--model-small')
+    orch.add_argument('--model-medium')
+    orch.add_argument('--model-large')
+    orch.add_argument('--lease', type=float, default=120, help='Claim lease duration in seconds')
+    orch.add_argument('--max-depth', type=int, default=3)
+    orch.add_argument('--max-children', type=int, default=4)
+    orch.add_argument('--max-tasks', type=int, default=40)
+    orch.add_argument('--max-rounds', type=int, default=2)
+    orch.add_argument('--max-attempts', type=int, default=2)
     run = commands.add_parser('experiment')
     run.add_argument('--backend', choices=('fixture', 'codex'))
     run.add_argument('--fleet', help='support, crewai-game-builder, swarm-handoff, or crewai-self-review')
@@ -334,20 +351,52 @@ def main(argv=None) -> int:
         print('support (scripted or live), crewai-game-builder, swarm-handoff, crewai-self-review\nUser fleets: experiment --adapter path/to/adapter.json')
         return 0
     if args.command == 'orch':
-        result = orchestration_demo(args.scenario)
-        if args.out:
-            args.out.parent.mkdir(parents=True, exist_ok=True)
-            args.out.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
-        if not args.verbose:
-            result = {
-                **result,
-                'results': {
+        if args.mode == 'demo':
+            result = orchestration_demo(args.scenario)
+            if args.out:
+                args.out.parent.mkdir(parents=True, exist_ok=True)
+                args.out.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
+            if not args.verbose:
+                result = {**result, 'results': {
                     name: {k: v for k, v in scenario.items() if k != 'events'}
-                    for name, scenario in result['results'].items()
-                },
-            }
-        print(json.dumps(result, indent=2))
-        return 0
+                    for name, scenario in result['results'].items()}}
+            print(json.dumps(result, indent=2))
+            return 0
+        try:
+            if args.mode != 'run' and not args.db:
+                raise ValueError('Pass --db to resume or inspect a run.')
+            db = args.db or Path('runs') / ('orch-' + timestamp().replace(':', '-').replace('.', '-') + '.sqlite')
+            store = RunStore(db)
+            if args.mode == 'run':
+                if not args.task:
+                    raise ValueError('Pass a task prompt: alpha orch run "your task".')
+                identities = load_identities(args.agents)
+                identity = args.identity or ('general' if 'general' in identities else next(iter(identities)))
+                limits = dict(max_depth=args.max_depth, max_children=args.max_children,
+                              max_tasks=args.max_tasks, max_rounds=args.max_rounds,
+                              max_attempts=args.max_attempts)
+                if any(not isinstance(x, int) or x < 1 for x in limits.values()):
+                    raise ValueError('Delegation and retry limits must be positive integers.')
+                store.start(args.task, identity, identities, limits)
+            if args.mode in ('run', 'resume'):
+                tiers = args.tiers.split(',') if args.tiers else None
+                models = {size: (getattr(args, 'model_' + size) or args.model)
+                          for size in ('small', 'medium', 'large')}
+                result = asyncio.run(run_workers(store, workers=args.workers, tiers=tiers,
+                                                 models=models, lease_seconds=args.lease))
+            else:
+                result = store.status()
+            root = next(t for t in result['tasks'] if t['id'] == result['root'])
+            summary = dict(database=str(db), root=result['root'], state=root['state'],
+                           result=json.loads(root['result']) if root['result'] else None,
+                           error=root['error'], counts=result['counts'])
+            if args.verbose:
+                summary['tasks'] = result['tasks']
+            print(json.dumps(summary, indent=2, ensure_ascii=False))
+            return 0 if args.mode == 'status' or root['state'] == 'done' else 2
+        except (ValueError, OSError, KeyError) as error:
+            print(f'Alpha: {error}', file=sys.stderr)
+            return 1
     if args.command == 'rubrics':
         for entry in available_rubrics():
             aliases = ', '.join(entry['aliases'])
