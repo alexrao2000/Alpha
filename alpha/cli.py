@@ -18,6 +18,7 @@ from .evaluation import ValidationPolicy
 from .accounting import BudgetPolicy
 from .report import render_report
 from .transformations import expanded_variants, validate_variants
+from .qualitative import CodexJudge, evaluate, human_review_template
 
 
 def parser() -> argparse.ArgumentParser:
@@ -52,6 +53,20 @@ def parser() -> argparse.ArgumentParser:
     report = commands.add_parser('report')
     report.add_argument('path', type=Path)
     report.add_argument('--out', type=Path)
+    qualitative = commands.add_parser('qualitative', help='Run opt-in, post-hoc quality evaluations over a saved experiment')
+    qualitative.add_argument('path', type=Path, help='Existing experiment.json')
+    qualitative.add_argument('--out', type=Path, help='Output directory (default: experiment directory)')
+    qualitative.add_argument('--candidate', help='Candidate variant to compare; defaults to saved selection')
+    qualitative.add_argument('--turn-count', action='store_true', help='Count observed user and assistant conversation turns')
+    qualitative.add_argument('--feedback', action='store_true', help='Summarize observed satisfaction, corrections, and follow-ups')
+    qualitative.add_argument('--interactions', type=Path, help='JSON with observed per-run conversation messages and feedback')
+    qualitative.add_argument('--simulate-feedback', action='store_true', help='Tautological scripted example; not empirical user feedback')
+    qualitative.add_argument('--human-template', action='store_true', help='Write a blank human scoring and comparison template')
+    qualitative.add_argument('--human', type=Path, help='Filled-in human review JSON')
+    qualitative.add_argument('--llm-judge', action='store_true', help='Ask a model to score individual holdout outputs')
+    qualitative.add_argument('--pairwise', action='store_true', help='Blindly compare candidate and baseline holdout outputs')
+    qualitative.add_argument('--judge-model', help='Explicit Codex model; without it uses CLI default')
+    qualitative.add_argument('--max-judgments', type=int, default=12, help='Maximum additional model calls, shared between judge methods')
     return result
 
 
@@ -77,6 +92,33 @@ def write_outputs(report, out: Path) -> None:
 
 
 async def run(args) -> int:
+    if args.command == 'qualitative':
+        report = json.loads(args.path.read_text(encoding='utf-8'))
+        out = (args.out or args.path.resolve().parent).resolve()
+        out.mkdir(parents=True, exist_ok=True)
+        if args.human_template:
+            template = human_review_template(report, args.candidate)
+            (out / 'human-review-template.json').write_text(
+                json.dumps(template, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+        interactions = json.loads(args.interactions.read_text(encoding='utf-8')) if args.interactions else None
+        human = json.loads(args.human.read_text(encoding='utf-8')) if args.human else None
+        judge = CodexJudge(args.judge_model) if args.llm_judge or args.pairwise else None
+        qualitative = await evaluate(
+            report, interactions=interactions, simulate_feedback=args.simulate_feedback,
+            human=human, judge=judge, score=args.llm_judge, pairwise=args.pairwise,
+            turn_count=args.turn_count, feedback=args.feedback,
+            candidate=args.candidate, max_judgments=args.max_judgments)
+        (out / 'qualitative.json').write_text(
+            json.dumps(qualitative, ensure_ascii=False, indent=2, allow_nan=False) + '\n',
+            encoding='utf-8')
+        (out / 'qualitative-report.html').write_text(
+            render_report({**report, 'qualitative': qualitative}), encoding='utf-8')
+        print(json.dumps({'qualitative': str(out / 'qualitative.json'),
+                          'report': str(out / 'qualitative-report.html'),
+                          'human_template': str(out / 'human-review-template.json') if args.human_template else None,
+                          'methods': qualitative['methods'],
+                          'model_judgment_calls': qualitative['model_judgment_calls']}, indent=2))
+        return 0
     if args.command == 'report':
         report = json.loads(args.path.read_text(encoding='utf-8'))
         out = (args.out or Path('runs') / timestamp().replace(':', '-').replace('.', '-')).resolve()
