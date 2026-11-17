@@ -168,6 +168,19 @@ class RuntimeTests(unittest.TestCase):
         store.resolve(root, "retry")
         self.assertEqual(store.status()["counts"]["queued"], 1)
 
+    def test_unserviceable_large_child_fails_instead_of_hanging(self):
+        store = self.store()
+        parent = store.claim("large-worker", 2, 120, 2)
+        store.settle(parent, {
+            "action": "delegate", "result": "",
+            "children": [{
+                "identity": "general", "prompt": "large child",
+                "metadata": {"expected_tokens": 15000, "file_bytes": 0, "tool_count": 0},
+            }]}, store.config())
+        with self.assertRaisesRegex(ValueError, "No configured worker"):
+            asyncio.run(run_workers(store, workers=1, tiers=["small"],
+                                    backend_factory=lambda model: FakeModel()))
+
     def test_cli_status_does_not_invoke_provider(self):
         self.store()
         args = parser().parse_args(["orch", "run", "hi", "--workers", "3"])
