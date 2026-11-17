@@ -1,0 +1,19 @@
+name: Alpha tests
+
+on:
+  push:
+    branches: [main, 'feat/optional-qualitative-evals']
+  pull_request:
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile sources
+        run: python -m compileall -q alpha test
+      - name: Unit tests
+        run: python -m unittest discover -s test -p '*_test.py' -v

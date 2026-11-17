@@ -41,6 +41,12 @@ On these holdout tasks the selected version used 42.9% fewer model requests and 
 
 This is one trial per game with a Codex-backed model adapter. The upstream crew is independently authored; the game specifications and executable checks are Alpha-authored. The result supports this small workload, not a general claim that the chief QA role is redundant. CLI usage includes cached tokens and transport overhead; these are not billed-dollar savings.
 
+## Optional subjective evaluation demos
+
+Alongside objective grading, Alpha can now demonstrate **LLM-as-judge scores, blind pairwise preferences, manual human review, conversation turn counts, follow-up/correction rates, and simulated user satisfaction**. Every mode is explicitly opt-in, runs after a saved experiment, and leaves the optimization decision unchanged. Synthetic feedback is always labeled; LLM judges make additional unaccounted-for model calls.
+
+Run `python3 -m alpha qualitative --help` or see [the qualitative evaluation guide](docs/qualitative.md) for commands, JSON examples, and privacy limits.
+
 ## Run the prototype
 
 The experiment engine, CLI, model transport, and HTML report renderer use Python 3.11 or newer with no third-party runtime dependencies. Run these commands from the repository checkout. Node.js 24 or newer is needed only for the optional eve agent-authoring runtime.

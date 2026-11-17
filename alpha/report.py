@@ -32,6 +32,60 @@ def pretty(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False)
 
 
+
+def qualitative_html(data: JSON | None) -> str:
+    if not data:
+        return ""
+    items: list[str] = []
+    for row in data.get("llm_scores", []):
+        items.append(
+            "<tr><td>LLM score</td><td>" + esc(row["key"]) + "</td><td>"
+            + esc(str(row["score"]) + "/5") + "</td><td>" + esc(row["reason"]) + "</td></tr>"
+        )
+    for row in data.get("pairwise", []):
+        items.append(
+            "<tr><td>Blind model comparison</td><td>" + esc(row["candidate_key"])
+            + "</td><td>" + esc(row["preferred"]) + "</td><td>" + esc(row["reason"]) + "</td></tr>"
+        )
+    for row in data.get("human", {}).get("scores", []):
+        items.append("<tr><td>Human score</td><td>" + esc(row["key"]) + "</td><td>"
+                     + esc(str(row["score"]) + "/5") + "</td><td>"
+                     + esc(row.get("notes", "")) + "</td></tr>")
+    for row in data.get("human", {}).get("pairs", []):
+        items.append("<tr><td>Human comparison</td><td>" + esc(row["candidate_key"])
+                     + "</td><td>" + esc(row["preferred"]) + "</td><td>"
+                     + esc(row.get("notes", "")) + "</td></tr>")
+    summary = data.get("interaction_summary", {})
+    turn_rows = ""
+    if "turn_count" in data.get("methods", []) or "feedback" in data.get("methods", []):
+        turn_rows = "<p>Interaction records: " + esc(summary.get("count", 0))
+        for key, label in (
+            ("mean_user_turns", "Mean user turns"),
+            ("mean_assistant_turns", "Mean assistant turns"),
+            ("mean_follow_up_turns", "Mean follow-up turns"),
+            ("abandonment_rate", "Abandonment rate"),
+            ("follow_up_rate", "Follow-up rate"),
+            ("correction_rate_per_follow_up", "Correction rate / follow-up"),
+            ("mean_satisfaction", "Mean satisfaction / 5"),
+        ):
+            value = summary.get(key)
+            turn_rows += " · " + label + ": " + (esc(value) if value is not None else "unavailable")
+        turn_rows += "</p>"
+    rows = (
+        '<div class="table-wrap"><table style="white-space:normal">'
+        "<thead><tr><th>METHOD</th><th>CASE</th><th>RESULT</th><th>NOTES</th></tr></thead>"
+        "<tbody>" + "".join(items) + "</tbody></table></div>"
+        if items else "<p>No completed subjective judgments were supplied.</p>"
+    )
+    notes = "".join("<p class='caption'>" + esc(note) + "</p>" for note in data.get("notes", []))
+    return (
+        "<h2>Optional qualitative evaluation</h2>"
+        '<div class="notice"><b>Exploratory evidence only.</b> '
+        "These judgments do not change Alpha's selected candidate or validated status."
+        "</div>" + turn_rows + rows + notes
+    )
+
+
 def render_report(report: JSON) -> str:
     fleet = report.get("fleet") or {}
     external = fleet.get("id") == "crewai-game-builder"
@@ -126,6 +180,7 @@ def render_report(report: JSON) -> str:
         tradeoffs_html = '<h2>Quality, cost, and latency</h2><div class="table-wrap"><table><thead><tr><th>WORKFLOW</th><th>QUALITY</th><th>TOKENS / SUCCESS</th><th>USD / SUCCESS</th><th>MEDIAN MS</th><th>P95 MS</th></tr></thead><tbody>' + ''.join(tradeoff_rows) + '</tbody></table></div>'
         tradeoffs_html += '<p class="caption">Labels were frozen on discovery; holdout does not choose a new winner. Only validated candidates enter the live frontier. Missing costs stay unknown and cannot establish dominance. USD values use supplied price estimates, never billing records.</p>'
         tradeoffs_html += '<div class="notice">Admitted model requests: ' + num(accounting.get('attempted_calls', 0)) + ' · failed: ' + num(accounting.get('failed_calls', 0)) + ' · interrupted: ' + num(accounting.get('interrupted_calls', 0)) + ' · unknown usage: ' + num(accounting.get('unknown_usage_attempts', 0)) + '<br>Active seconds: ' + num(accounting.get('active_seconds', 0)) + '. Reported token ceilings stop new requests after observed usage reaches the threshold; in-flight work can overshoot.</div>'
+    tradeoffs_html += qualitative_html(report.get("qualitative"))
     values = {
         "STATUS": "SCRIPTED DEMO" if report["fixture"] else "LIVE MODEL RUN",
         "ID": esc(report["id"][:8]),
