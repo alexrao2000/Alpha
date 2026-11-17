@@ -16,6 +16,9 @@ import uuid
 from .backends import CodexBackend
 from .processes import run_process
 from .orchestration import classify, TIERS
+from .guardrails import (ensure_tables, validate_limits, check_graph,
+                         block_failed_dependencies, budget_snapshot,
+                         budget_stop_reason, start_attempt, mark_unknown, report_usage)
 
 RESPONSE_SCHEMA = {
     "type": "object", "additionalProperties": False,
@@ -74,6 +77,7 @@ class RunStore:
         conn = sqlite3.connect(self.path, timeout=30, isolation_level=None)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA busy_timeout=30000")
+        ensure_tables(conn)
         return conn
 
     def transact(self, func):
@@ -93,6 +97,7 @@ class RunStore:
               command: str | None = None, read_only_command: bool = False) -> str:
         if not prompt.strip() or identity not in identities:
             raise ValueError("Provide a task prompt and a defined agent identity.")
+        validate_limits(limits)
         if self.path.exists():
             raise ValueError("Run database already exists. Use orch resume instead.")
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -135,13 +140,14 @@ class RunStore:
         finally:
             conn.close()
 
-    def claim(self, worker: str, tier: int, lease_seconds: float, attempts: int) -> dict | None:
+    def claim(self, worker: str, tier: int, lease_seconds: float, attempts: int,
+              models: dict | None = None) -> dict | None:
         def tx(conn):
             now = time.time()
             settings = json.loads(conn.execute(
                 "SELECT value FROM settings WHERE key='config'").fetchone()[0])
             if settings.get("read_only", True):
-                expired = conn.execute("""SELECT id,parent_id FROM tasks WHERE
+                expired = conn.execute("""SELECT id,parent_id,lease_token FROM tasks WHERE
                     state='running' AND lease_until<=? AND attempts>=?""",
                     (now, attempts)).fetchall()
                 conn.execute("""UPDATE tasks SET state='failed',error='Lease expired after final attempt',
@@ -152,7 +158,7 @@ class RunStore:
                     lease_token=NULL,lease_until=NULL,updated=?
                     WHERE state='running' AND lease_until<=?""", (now, now))
             else:
-                expired = conn.execute("""SELECT id,parent_id FROM tasks WHERE
+                expired = conn.execute("""SELECT id,parent_id,lease_token FROM tasks WHERE
                     state='running' AND lease_until<=?""", (now,)).fetchall()
                 # A mutating command may have succeeded before its worker disappeared.
                 conn.execute("""UPDATE tasks SET state='needs_review',
