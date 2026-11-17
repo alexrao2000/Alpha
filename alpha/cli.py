@@ -18,7 +18,8 @@ from .evaluation import ValidationPolicy
 from .accounting import BudgetPolicy
 from .report import render_report
 from .transformations import expanded_variants, validate_variants
-from .qualitative import CodexJudge, evaluate, human_review_template
+from .qualitative import CodexJudge, evaluate, human_review_template, calibrate_saved
+from .human_review import render_human_review
 
 
 def parser() -> argparse.ArgumentParser:
@@ -68,13 +69,14 @@ def parser() -> argparse.ArgumentParser:
     qualitative.add_argument('--judge-model', help='Explicit Codex model; without it uses CLI default')
     qualitative.add_argument('--max-judgments', type=int, default=12, help='Maximum additional model calls, shared between judge methods')
     quick = commands.add_parser('q', help='Shortcuts for optional evaluations of the latest saved run')
-    quick.add_argument('mode', choices=('demo', 'judge', 'pair', 'human', 'turns', 'all'),
+    quick.add_argument('mode', choices=('demo', 'judge', 'pair', 'human', 'turns', 'all', 'calibrate'),
                        help='demo=synthetic feedback, judge=LLM scores+pairwise, pair=pairwise only, human=review template, turns=real conversations, all=all demos')
     quick.add_argument('path', type=Path, nargs='?', help='Experiment JSON or run directory (default: latest in ./runs)')
     quick.add_argument('--out', type=Path, help='Destination for qualitative files (default: run directory)')
     quick.add_argument('--candidate', help='Override the selected candidate')
     quick.add_argument('--interactions', type=Path, help='Observed conversation/feedback records for turns or all')
     quick.add_argument('--human', type=Path, help='Completed human-review JSON for human or all')
+    quick.add_argument('--judge-results', type=Path, help='Previously saved qualitative.json containing LLM judgments (calibrate only)')
     quick.add_argument('--judge-model', help='Codex judge model; defaults to the current CLI model')
     quick.add_argument('--max-judgments', type=int, default=12, help='Cap on additional LLM judging calls')
     return result
@@ -100,6 +102,17 @@ def expand_quick_command(args: argparse.Namespace) -> argparse.Namespace:
     if args.command != 'q':
         return args
     mode = args.mode
+    if mode == 'calibrate':
+        if args.human is None:
+            raise ValueError('Calibration needs human ratings: pass --human FILE.')
+        if args.interactions is not None:
+            raise ValueError('Calibration reads saved judgments, not interaction records.')
+        path = resolve_experiment_path(args.path)
+        return argparse.Namespace(
+            command='calibrate', path=path, out=args.out, human=args.human,
+            judge_results=args.judge_results or path.resolve().parent / 'qualitative.json')
+    if args.judge_results is not None:
+        raise ValueError('--judge-results is only supported by q calibrate.')
     if mode == 'turns' and args.interactions is None:
         raise ValueError('Turn counts need real messages: pass --interactions FILE, or use q demo.')
     if mode in ('judge', 'pair', 'demo') and args.interactions is not None:
@@ -146,6 +159,26 @@ def write_outputs(report, out: Path) -> None:
 
 
 async def run(args) -> int:
+    if args.command == 'calibrate':
+        path = resolve_experiment_path(args.path)
+        report = json.loads(path.read_text(encoding='utf-8'))
+        human = json.loads(args.human.read_text(encoding='utf-8'))
+        judge_results = json.loads(args.judge_results.read_text(encoding='utf-8'))
+        result = calibrate_saved(report, judge_results, human)
+        out = (args.out or path.resolve().parent).resolve()
+        out.mkdir(parents=True, exist_ok=True)
+        (out / 'calibration.json').write_text(
+            json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False) + '\n', encoding='utf-8')
+        (out / 'calibration-report.html').write_text(
+            render_report({**report, 'qualitative': result}), encoding='utf-8')
+        print(json.dumps({
+            'calibration': str(out / 'calibration.json'),
+            'report': str(out / 'calibration-report.html'),
+            'rating_matches': result['calibration']['ratings']['matched'],
+            'pairwise_matches': result['calibration']['pairwise']['matched'],
+            'new_model_calls': 0,
+        }, indent=2))
+        return 0
     if args.command == 'qualitative':
         path = resolve_experiment_path(args.path)
         report = json.loads(path.read_text(encoding='utf-8'))
@@ -155,6 +188,16 @@ async def run(args) -> int:
             template = human_review_template(report, args.candidate)
             (out / 'human-review-template.json').write_text(
                 json.dumps(template, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+            (out / 'human-review.html').write_text(
+                render_human_review(report, template), encoding='utf-8')
+            if not any((args.simulate_feedback, args.turn_count, args.feedback,
+                        args.llm_judge, args.pairwise, args.human)):
+                # A blank questionnaire is not an evaluation. Do not overwrite
+                # previously saved LLM judgments needed for calibration.
+                print(json.dumps({'human_template': str(out / 'human-review-template.json'),
+                                  'human_review_page': str(out / 'human-review.html'),
+                                  'model_judgment_calls': 0}, indent=2))
+                return 0
         interactions = json.loads(args.interactions.read_text(encoding='utf-8')) if args.interactions else None
         human = json.loads(args.human.read_text(encoding='utf-8')) if args.human else None
         judge = CodexJudge(args.judge_model) if args.llm_judge or args.pairwise else None
@@ -171,6 +214,7 @@ async def run(args) -> int:
         print(json.dumps({'qualitative': str(out / 'qualitative.json'),
                           'report': str(out / 'qualitative-report.html'),
                           'human_template': str(out / 'human-review-template.json') if args.human_template else None,
+                          'human_review_page': str(out / 'human-review.html') if args.human_template else None,
                           'methods': qualitative['methods'],
                           'model_judgment_calls': qualitative['model_judgment_calls']}, indent=2))
         return 0

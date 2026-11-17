@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from .backends import CodexBackend
+from .calibration import analyze_judgments
 
 
 def run_key(run: dict) -> str:
@@ -326,7 +327,7 @@ async def evaluate(
         notes.append("Model judgments make additional Codex calls; costs are not part of original experiment accounting.")
         if total == max_judgments:
             notes.append("Model judgment cap reached; remaining cases were not evaluated.")
-    return {
+    result = {
         "version": 1, "experiment_id": report["id"], "candidate": candidate,
         "methods": methods, "notes": notes, "interactions": rows,
         "interaction_summary": _summary(rows), "llm_scores": graded,
@@ -334,3 +335,63 @@ async def evaluate(
         "model_judgment_calls": total,
         "pairwise_preferences": dict(Counter(r["preferred"] for r in comparisons)),
     }
+    result.update(analyze_judgments(
+        graded, comparisons, human_results["scores"], human_results["pairs"]
+    ))
+    return result
+
+
+def calibrate_saved(report: dict, recorded: dict, human: dict) -> dict:
+    """Compare earlier model judgments to a human review without more model calls.
+
+    Reject judgments from another experiment, candidate, or unknown test case.
+    Human ratings always come from an explicit review file, never simulation.
+    """
+    if recorded.get("experiment_id") != report["id"]:
+        raise ValueError("Saved model judgments belong to a different experiment.")
+    candidate = recorded.get("candidate")
+    if candidate is not None and candidate not in {v["id"] for v in report["variants"]}:
+        raise ValueError("Saved model judgments name an unknown candidate.")
+    if not isinstance(recorded.get("llm_scores"), list) or not isinstance(recorded.get("pairwise"), list):
+        raise ValueError("Saved qualitative file lacks model judgment lists.")
+    scores = recorded["llm_scores"]
+    pairs = recorded["pairwise"]
+    if not scores and not pairs:
+        raise ValueError("Saved qualitative file has no LLM judgments; run alpha q judge first.")
+    valid_runs = {run_key(r) for r in report["runs"] if r["split"] == "holdout"}
+    valid_pairs = {(run_key(a), run_key(b)) for a, b in paired_holdout(report, candidate)}
+    seen_scores, seen_pairs = set(), set()
+    for item in scores:
+        if not isinstance(item, dict):
+            raise ValueError("Malformed saved model rating.")
+        key = item.get("key")
+        if (key not in valid_runs or key in seen_scores or item.get("source") != "model"
+                or type(item.get("score")) is not int or not 1 <= item["score"] <= 5):
+            raise ValueError("Invalid or duplicate saved model rating.")
+        seen_scores.add(key)
+    for item in pairs:
+        if not isinstance(item, dict):
+            raise ValueError("Malformed saved model preference.")
+        key = (item.get("baseline_key"), item.get("candidate_key"))
+        if (key not in valid_pairs or key in seen_pairs or item.get("source") != "model"
+                or item.get("preferred") not in ("baseline", "candidate", "tie")):
+            raise ValueError("Invalid or duplicate saved model preference.")
+        seen_pairs.add(key)
+    human_results = _human_reviews(report, human, candidate)
+    if not human_results["scores"] and not human_results["pairs"]:
+        raise ValueError("Human review is empty; fill in at least one 1–5 score or A/B preference.")
+    result = {
+        **recorded,
+        "human": human_results,
+        "methods": sorted(set(recorded.get("methods", [])) | {"human"}),
+        "notes": [
+            "Calibration used saved model judgments and a separate human review.",
+            "No additional model calls or original experiment changes.",
+        ],
+        "new_model_judgment_calls": 0,
+        "model_judgment_source": "saved",
+    }
+    result.update(analyze_judgments(
+        scores, pairs, human_results["scores"], human_results["pairs"]
+    ))
+    return result

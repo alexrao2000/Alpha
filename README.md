@@ -41,37 +41,49 @@ On these holdout tasks the selected version used 42.9% fewer model requests and 
 
 This is one trial per game with a Codex-backed model adapter. The upstream crew is independently authored; the game specifications and executable checks are Alpha-authored. The result supports this small workload, not a general claim that the chief QA role is redundant. CLI usage includes cached tokens and transport overhead; these are not billed-dollar savings.
 
-## Optional subjective evaluation demos
+## Optional subjective evaluation and human calibration
 
-Alpha includes **opt-in** quality evaluations alongside its objective checks: LLM-as-judge scores, blind pairwise comparisons, human reviews, conversation turn counts, follow-up/correction rates, and simulated user feedback. These run **after** a saved experiment and do not change the selected candidate or validation decision.
+Alpha separates **who evaluates** from **how they evaluate**, giving a 2 × 2 matrix:
 
-Install the CLI once from the repository checkout:
+| Evaluator | 1–5 stars: rate one output | A/B: choose between two outputs |
+| --- | --- | --- |
+| **Human** | A reviewer rates an output | A reviewer compares two candidate outputs |
+| **LLM** | A separate model rates an output | A separate model compares the same two outputs |
+
+Comparing the LLM's judgments with human judgments provides a **reference baseline** for checking judge reliability. Alpha aligns the *same run IDs* for 1–5 ratings and the *same pairs* for A/B preferences; it reports exact agreement, ratings within one star, average rating error, signed rating bias, A/B agreement, and individual disagreements. Human judgments are reference data, **not infallible ground truth**. Missing judgments are shown as unavailable, never counted as agreement or disagreement.
+
+Install the CLI once:
 
 ```sh
 python3 -m pip install -e .
 ```
 
-Then use these shortcuts:
+These optional commands use the most recent saved experiment in `./runs` unless you pass a run directory or `experiment.json`:
 
 | Command | What it does |
 | --- | --- |
-| `alpha q demo` | Demonstrate simulated feedback, follow-ups, corrections, and turn counts (not real user evidence) |
-| `alpha q judge` | Score holdout results with an LLM and compare baseline vs. candidate blindly |
-| `alpha q pair` | Run blind pairwise LLM comparisons only |
-| `alpha q human` | Generate a template for manual human ratings and preferences |
-| `alpha q turns --interactions messages.json` | Count real user/assistant turns and summarize supplied corrections and feedback |
-| `alpha q all` | Run all demonstrations, including additional LLM judgments |
+| `alpha q demo` | Simulated feedback, corrections, and conversation turn counts |
+| `alpha q judge` | LLM 1–5 scores and blind A/B comparisons |
+| `alpha q pair` | LLM A/B comparisons only |
+| `alpha q human` | Produce an offline human-review page with 1–5 and blind A/B questions |
+| `alpha q calibrate --human FILE` | Compare completed human ratings with previously saved LLM judgments |
+| `alpha q turns --interactions messages.json` | Count actual conversation turns and explicit corrections |
+| `alpha q all` | Demonstrate the available methods (including model calls) |
 
-By default, `alpha q` uses the newest `./runs/*/experiment.json`. To select a particular experiment or limit additional model calls:
+To **compare human and LLM judgment**:
 
 ```sh
-alpha q judge runs/my-experiment --max-judgments 4
-alpha q all runs/my-experiment --judge-model MODEL_NAME
+alpha q human
+# Open the generated human-review.html; rate outputs and download human-review-completed.json
+alpha q judge --max-judgments 8
+alpha q calibrate --human /path/to/human-review-completed.json
 ```
 
-The commands create `qualitative.json` and `qualitative-report.html` in the run directory; use `--out DIR` to avoid replacing earlier qualitative reports. `judge`, `pair`, and `all` make **additional model calls** that are not included in the original experiment's cost figures. `demo` uses synthetic feedback derived from existing pass/fail results; it is only a demonstration, not independent evidence. Turn counts from actual conversations require an `--interactions` file.
+The last command reads the prior `qualitative.json`, **makes no additional model calls**, and writes `calibration.json` and `calibration-report.html` with the 2 × 2 matrix and matched agreement analysis. To use older or separately stored results, pass `alpha q calibrate runs/MY-RUN --human FILE --judge-results PATH`. Creating a blank human-review page does not overwrite saved model judgments.
 
-For the full input format, individual switches, and limitations, see [the qualitative evaluation guide](docs/qualitative.md).
+All evaluation modes are **off by default**, and none changes Alpha's existing objective grading or selection. `judge`, `pair`, and `all` make additional model calls excluded from the original experiment's cost accounting. `demo` is synthetic data derived from known pass/fail outcomes; it is not independent evidence about users. For privacy, only use an LLM judge with data permitted to leave your environment.
+
+See [the qualitative evaluation guide](docs/qualitative.md) for input formats and limitations.
 
 ## Run the prototype
 

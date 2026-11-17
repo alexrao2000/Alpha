@@ -33,6 +33,92 @@ def pretty(value: Any) -> str:
 
 
 
+
+def judgment_analysis_html(data: JSON) -> str:
+    """Display the 2x2 methods and human-reference comparisons."""
+    matrix = data.get("matrix")
+    if not matrix:
+        return ""
+    cells = []
+    for evaluator in ("human", "llm"):
+        ratings = matrix[evaluator]["stars"]
+        pairs = matrix[evaluator]["ab"]
+        stars = (
+            str(ratings["count"]) + " ratings; mean " + esc(ratings["mean"]) + "/5"
+            if ratings["count"] else "Not measured"
+        )
+        choices = pairs["preferences"]
+        ab = (
+            str(pairs["count"]) + " comparisons; baseline "
+            + str(choices["baseline"]) + ", candidate " + str(choices["candidate"])
+            + ", tie " + str(choices["tie"])
+            if pairs["count"] else "Not measured"
+        )
+        cells.append(
+            "<tr><th>" + esc("Human" if evaluator == "human" else "LLM")
+            + "</th><td>" + stars + "</td><td>" + ab + "</td></tr>"
+        )
+    result = (
+        "<h3>How quality is judged: 2 × 2</h3>"
+        '<div class="table-wrap"><table style="white-space:normal">'
+        "<thead><tr><th>WHO JUDGES</th><th>1–5 STARS · ONE OUTPUT</th>"
+        "<th>A/B · TWO OUTPUTS</th></tr></thead><tbody>"
+        + "".join(cells) + "</tbody></table></div>"
+    )
+    cal = data.get("calibration", {})
+    if not cal:
+        return result
+    rating, pair = cal.get("ratings", {}), cal.get("pairwise", {})
+    exact_rating = pct(rating.get("exact_agreement"))
+    close_rating = pct(rating.get("within_one_star"))
+    exact_pair = pct(pair.get("exact_agreement"))
+    mae = "—" if rating.get("mean_absolute_error") is None else esc(rating["mean_absolute_error"])
+    bias = "—" if rating.get("mean_signed_error") is None else esc(rating["mean_signed_error"])
+    result += (
+        "<h3>Human ↔ LLM agreement</h3>"
+        "<p><b>1–5 stars:</b> " + esc(rating.get("matched", 0))
+        + " matched ratings; exact " + exact_rating + "; within 1 star "
+        + close_rating + "; average absolute gap " + mae
+        + " stars; signed LLM − human bias " + bias + " stars.</p>"
+        "<p><b>A/B choices:</b> " + esc(pair.get("matched", 0))
+        + " matched comparisons; exact agreement " + exact_pair
+        + " (a tie is a separate outcome).</p>"
+    )
+    if pair.get("matched", 0):
+        confusion = pair["confusion"]
+        table_rows = []
+        for human_choice in ("baseline", "candidate", "tie"):
+            table_rows.append(
+                "<tr><th>" + esc(human_choice) + "</th>"
+                + "".join(
+                    "<td>" + esc(confusion[human_choice][model_choice]) + "</td>"
+                    for model_choice in ("baseline", "candidate", "tie")
+                ) + "</tr>"
+            )
+        result += (
+            "<h4>A/B agreement by choice (rows: human, columns: LLM)</h4>"
+            '<div class="table-wrap"><table>'
+            "<thead><tr><th>HUMAN \\ LLM</th><th>BASELINE</th>"
+            "<th>CANDIDATE</th><th>TIE</th></tr></thead><tbody>"
+            + "".join(table_rows) + "</tbody></table></div>"
+        )
+    disagreements = []
+    for row in rating.get("disagreements", [])[:8]:
+        disagreements.append(
+            "<li>Stars · " + esc(row["key"]) + " · human "
+            + esc(row["human"]) + " vs LLM " + esc(row["llm"]) + "</li>"
+        )
+    for row in pair.get("disagreements", [])[:8]:
+        disagreements.append(
+            "<li>A/B · " + esc(row["candidate_key"]) + " · human "
+            + esc(row["human"]) + " vs LLM " + esc(row["llm"]) + "</li>"
+        )
+    if disagreements:
+        result += "<details><summary>Review mismatched judgments</summary><ul>" + "".join(disagreements) + "</ul></details>"
+    result += "".join("<p class='caption'>" + esc(n) + "</p>" for n in cal.get("notes", []))
+    return result
+
+
 def qualitative_html(data: JSON | None) -> str:
     if not data:
         return ""
@@ -82,7 +168,7 @@ def qualitative_html(data: JSON | None) -> str:
         "<h2>Optional qualitative evaluation</h2>"
         '<div class="notice"><b>Exploratory evidence only.</b> '
         "These judgments do not change Alpha's selected candidate or validated status."
-        "</div>" + turn_rows + rows + notes
+        "</div>" + judgment_analysis_html(data) + turn_rows + rows + notes
     )
 
 
