@@ -45,7 +45,7 @@ This is one trial per game with a Codex-backed model adapter. The upstream crew 
 
 Alongside objective grading, Alpha can now demonstrate **LLM-as-judge scores, blind pairwise preferences, manual human review, conversation turn counts, follow-up/correction rates, and simulated user satisfaction**. Every mode is explicitly opt-in, runs after a saved experiment, and leaves the optimization decision unchanged. Synthetic feedback is always labeled; LLM judges make additional unaccounted-for model calls.
 
-Run `python3 -m alpha qualitative --help` or see [the qualitative evaluation guide](docs/qualitative.md) for commands, JSON examples, and privacy limits.
+After installing with `python3 -m pip install -e .`, try `alpha q demo` (synthetic turn-count demo), `alpha q judge` (LLM scoring and blind comparisons), or `alpha q human` (manual review template). The shortcuts use the newest saved run in `./runs` unless you supply one. See [the qualitative evaluation guide](docs/qualitative.md) for more commands, JSON examples, and privacy limits.
 
 ## Run the prototype
 
