@@ -59,6 +59,7 @@ button{padding:12px 18px;background:#b8f28a;border:0;border-radius:5px;font-weig
 <h1>Human quality evaluation</h1>
 <p>Two surveys: <strong>1–5 stars</strong> for one response, and <strong>A/B</strong> for two responses to the same task. Workflow identities are hidden in this page's visible choices. No answers are sent to a server.</p>
 <p class="muted">Your ratings are a reference for assessing whether LLM judges agree with people; they are not objective ground truth.</p>
+<section id="grading-guide" aria-label="Shared grading criteria"></section>
 <h2>1–5 stars · single-output quality</h2><div id="ratings"></div>
 <h2>A/B · relative preference</h2><div id="pairs"></div>
 <button id="download" type="button">Download completed human review JSON</button>
@@ -71,6 +72,23 @@ const add=(parent,tag,content,cls='')=>{
   if(content!==undefined)n.textContent=content;parent.append(n);return n;
 };
 const payload=thing=>JSON.stringify(thing,null,2);
+const rubric=data.template.rubric?.definition;
+if(rubric){
+  const guide=document.querySelector('#grading-guide');
+  add(guide,'h2','Use the same grading rubric as the LLM');
+  add(guide,'p',rubric.purpose);
+  add(guide,'h3','What to check');
+  const criteria=add(guide,'ul');
+  rubric.criteria.forEach(item=>add(criteria,'li',item.label+': '+item.description));
+  add(guide,'h3','What the 1–5 scores mean');
+  const anchors=add(guide,'ul');
+  for(let score=1;score<=5;score++)add(anchors,'li',score+' — '+rubric.anchors[String(score)]);
+  add(guide,'h3','How to choose A/B');
+  add(guide,'p',rubric.pairwise.instruction);
+  add(guide,'p',rubric.pairwise.tie_rule);
+  add(guide,'p',rubric.limitations,'muted');
+  add(guide,'p','Rubric: '+rubric.id+' · version '+rubric.version+' · SHA-256 '+data.template.rubric.sha256.slice(0,12),'muted');
+}
 const option=(container,group,value,text)=>{
   const label=add(container,'label');const radio=document.createElement('input');
   radio.type='radio';radio.name=group;radio.value=value;label.append(radio,document.createTextNode(' '+text));
