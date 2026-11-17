@@ -80,15 +80,83 @@ expires; another worker can then claim it. Automatic retries are safe here
 because **agent model calls run read-only, with external tools forbidden**.
 Duplicate model calls (and additional token cost) can still occur on crashes.
 
+## Run your own agent program
+
+You can run **real external agent code**, including programs that use tools,
+instead of the Codex read-only model transport. Supply the command explicitly:
+
+```sh
+alpha orch run "Inspect the repository and report a fix" \
+  --command "python3 my_agent.py" --db runs/code-task.sqlite --workers 2
+```
+
+Alpha starts one command per claimed task. The command reads one JSON object
+from stdin with these fields:
+
+```json
+{
+  "task_id": "stable task ID",
+  "operation_id": "same stable ID for idempotency at your external service",
+  "attempt": 1,
+  "identity": "general",
+  "prompt": "agent instructions, task, and completed child results",
+  "schema": {"type": "object"}
+}
+```
+
+`schema` is the complete response schema, abbreviated above. Your command
+must write exactly one JSON object to stdout, for example:
+
+```json
+{"action":"complete","result":"I finished the requested work.","children":[]}
+```
+
+To delegate, return `{"action":"delegate","result":"","children":[...]}`,
+where each child specifies `identity`, `prompt`, and `metadata` with integer
+`expected_tokens`, `file_bytes`, and `tool_count`. The command is invoked
+again for the parent after the children finish. Keep diagnostics on stderr,
+not stdout. The command is trusted code supplied by the operator, and runs
+with that user's local permissions and environment.
+
+**Side effects:** An external command is assumed capable of changes by default.
+Its claim is persisted before invocation. If it fails, times out, or its lease
+expires, Alpha puts it in `needs_review` and blocks dependent tasks rather
+than blindly repeating a potentially successful external operation.
+
+Reconcile after checking the actual external state:
+
+```sh
+alpha orch status --db runs/code-task.sqlite --verbose
+alpha orch resolve TASK_ID --db runs/code-task.sqlite --decision done --result "verified result"
+# Or explicitly authorize a replay, after verifying the operation did not occur:
+alpha orch resolve TASK_ID --db runs/code-task.sqlite --decision retry
+alpha orch resume --db runs/code-task.sqlite
+```
+
+`--decision failed` permanently fails the uncertain task. For **genuinely
+read-only** command adapters, you may specify `--read-only-command` when
+creating the run to allow automatic recovery and bounded retries. Never use
+that flag for code that writes files, calls mutating APIs, sends messages, or
+may otherwise produce external effects.
+
+The stable `operation_id` lets your worker propagate a deduplication key
+to downstream APIs. Alpha **does not guarantee exactly once** for external
+effects: the external system must enforce that key, or an operator must
+reconcile uncertain outcomes. The initial command and policy are stored in
+the run database and reused on resume.
+
 ## Boundaries
 
 - **Real:** Codex calls, multiple worker loops, SQLite state, worker slot
   release, child completion and parent resumption, identity/skill loading,
   bounded delegation, expiry/reclaim, token-fenced claims, restart/resume.
+- **Command adapter:** executes operator-supplied worker processes with an
+  explicit JSON protocol. Potential side effects are conservatively fenced
+  for human reconciliation instead of silently replayed.
 - **Not implemented:** connecting this scheduler to the existing experiment
-  optimizer; remote multi-host infrastructure; executing arbitrary mutating
-  tools with an external idempotency protocol; human approvals; cost budgets;
-  process-level exactly-once execution.
+  optimizer; remote multi-host infrastructure; an enforced external
+  idempotency protocol; human approvals; cost budgets; process-level
+  exactly-once execution.
 - The existing `alpha orch demo` is **only** a scripted failure-mode example,
   not the implementation behind `alpha orch run`.
 
