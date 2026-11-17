@@ -126,7 +126,7 @@ separate simulator, not proof of real execution.
 
 ## Run the prototype
 
-The experiment engine, CLI, model transport, and HTML report renderer use Python 3.11 or newer with no third-party runtime dependencies. Run these commands from the repository checkout. Node.js 24 or newer is needed only for the optional eve agent-authoring runtime.
+The experiment engine, CLI, model transport, and HTML report renderer use Python 3.14 or newer with no third-party runtime dependencies. Run these commands from the repository checkout. Node.js 24 or newer is needed only for the optional eve agent-authoring runtime.
 
 ```sh
 python3 -m alpha experiment --backend fixture
