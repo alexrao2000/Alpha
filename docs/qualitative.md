@@ -1,5 +1,54 @@
 # Optional qualitative evaluations
 
+## Shared grading guidelines
+
+Asking either a person or an LLM to say whether an answer is simply "good" makes
+ratings hard to interpret. Instead, give **both** the same written instructions
+(*rubric*): what qualities matter, what each 1–5 value means, and what counts
+as a meaningful advantage in A/B.
+
+The default `general-output-quality` rubric uses:
+
+| Criterion | Question |
+| --- | --- |
+| Relevance | Does it address the actual request? |
+| Completeness | Does it cover the important parts? |
+| Clarity | Is it understandable and appropriately organized? |
+| Instruction following | Does it respect the user's constraints and format? |
+| Helpfulness | Does it move the user toward the intended outcome? |
+
+The anchors are explicitly defined: **1** poor (major failure), **2** weak
+(serious gaps), **3** adequate (useful but noticeable weaknesses), **4** good
+(minor gaps), and **5** excellent (satisfies visible requirements). A/B reviewers
+apply the same criteria to both outputs; ties are valid when neither is
+meaningfully better. Reviewers should not automatically reward extra length
+or infer missing facts.
+
+**Implementation:** `alpha/rubrics.py` contains the default rubric and
+validation. `alpha q human` embeds the full rubric in the standalone human
+review page and its exported JSON. `alpha q judge` supplies the same rubric
+in the LLM score and pairwise prompts. Results record the rubric definition
+and its SHA-256 fingerprint. `alpha q calibrate` checks these fingerprints
+before assessing human/model agreement. If the rubric differs, calibration
+refuses the comparison. Legacy results without a recorded rubric are flagged
+as unverified rather than assumed equivalent.
+
+You may customize instructions without changing the experiment engine:
+
+```sh
+alpha q human --rubric examples/rubrics/writing-quality.json
+alpha q judge --rubric examples/rubrics/writing-quality.json
+alpha q calibrate --human /path/to/human-review-completed.json
+```
+
+The [writing rubric](../examples/rubrics/writing-quality.json) is an editable
+example for Alpha's writing/review workflow. To create your own, copy it and
+change the ID/version, purpose, criteria, 1–5 anchors, pairwise instructions,
+and tie rule. Keep all five anchors, unique criterion IDs, and the JSON fields
+shown in the example. **Use the same file for the human and LLM runs.** The
+rubric is frozen with the saved results; changing it after the fact requires
+new judgments, not only relabeling existing scores.
+
 ## The 2 × 2 evaluation matrix
 
 Who evaluates and how they evaluate are independent choices:
@@ -66,6 +115,7 @@ Then run these from the repository root. The latest saved experiment under ./run
 
     alpha q demo                              # Synthetic feedback, follow-ups, turn count
     alpha q judge                             # LLM scores plus blind pairwise comparison
+    alpha q judge --rubric FILE               # Use custom shared grading criteria
     alpha q pair                              # Pairwise comparison only
     alpha q human                             # Create human review template
     alpha q turns --interactions messages.json # Count recorded turns, follow-ups, corrections
@@ -122,4 +172,4 @@ LLM methods run after the existing experiment and make additional model calls. -
 
 A model judge receives a saved run's first-step context, final response or artifact, and resulting state. Only use it if this data may be sent to the judge provider. Human review, recorded interactions, and synthetic feedback make no model calls. Raw interaction messages are counted but not copied into the summary.
 
-These methods now support comparison against supplied human judgments, but Alpha does not ship a pre-labeled human reference set or claim statistical certification. Agreement and errors are descriptive and do not provide confidence bounds on judge accuracy. They remain exploratory signals, not proof that removing a role preserves quality.
+These methods now support comparison against supplied human judgments under matching written rubrics, but Alpha does not ship a pre-labeled human reference set or claim statistical certification. Agreement and errors are descriptive and do not provide confidence bounds on judge accuracy. They remain exploratory signals, not proof that removing a role preserves quality.
