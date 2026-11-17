@@ -20,6 +20,7 @@ from .report import render_report
 from .transformations import expanded_variants, validate_variants
 from .qualitative import CodexJudge, evaluate, human_review_template, calibrate_saved
 from .human_review import render_human_review
+from .rubrics import load_rubric
 
 
 def parser() -> argparse.ArgumentParser:
@@ -67,6 +68,7 @@ def parser() -> argparse.ArgumentParser:
     qualitative.add_argument('--llm-judge', action='store_true', help='Ask a model to score individual holdout outputs')
     qualitative.add_argument('--pairwise', action='store_true', help='Blindly compare candidate and baseline holdout outputs')
     qualitative.add_argument('--judge-model', help='Explicit Codex model; without it uses CLI default')
+    qualitative.add_argument('--rubric', type=Path, help='Optional JSON grading rubric shared by human and LLM reviewers')
     qualitative.add_argument('--max-judgments', type=int, default=12, help='Maximum additional model calls, shared between judge methods')
     quick = commands.add_parser('q', help='Shortcuts for optional evaluations of the latest saved run')
     quick.add_argument('mode', choices=('demo', 'judge', 'pair', 'human', 'turns', 'all', 'calibrate'),
@@ -78,6 +80,7 @@ def parser() -> argparse.ArgumentParser:
     quick.add_argument('--human', type=Path, help='Completed human-review JSON for human or all')
     quick.add_argument('--judge-results', type=Path, help='Previously saved qualitative.json containing LLM judgments (calibrate only)')
     quick.add_argument('--judge-model', help='Codex judge model; defaults to the current CLI model')
+    quick.add_argument('--rubric', type=Path, help='Optional JSON grading rubric for human and model review')
     quick.add_argument('--max-judgments', type=int, default=12, help='Cap on additional LLM judging calls')
     return result
 
@@ -133,6 +136,7 @@ def expand_quick_command(args: argparse.Namespace) -> argparse.Namespace:
         llm_judge=mode in ('judge', 'all'),
         pairwise=mode in ('judge', 'pair', 'all'),
         judge_model=args.judge_model,
+        rubric=args.rubric,
         max_judgments=args.max_judgments,
     )
 
@@ -182,10 +186,11 @@ async def run(args) -> int:
     if args.command == 'qualitative':
         path = resolve_experiment_path(args.path)
         report = json.loads(path.read_text(encoding='utf-8'))
+        rubric = load_rubric(args.rubric)
         out = (args.out or path.resolve().parent).resolve()
         out.mkdir(parents=True, exist_ok=True)
         if args.human_template:
-            template = human_review_template(report, args.candidate)
+            template = human_review_template(report, args.candidate, rubric=rubric)
             (out / 'human-review-template.json').write_text(
                 json.dumps(template, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
             (out / 'human-review.html').write_text(
@@ -200,12 +205,12 @@ async def run(args) -> int:
                 return 0
         interactions = json.loads(args.interactions.read_text(encoding='utf-8')) if args.interactions else None
         human = json.loads(args.human.read_text(encoding='utf-8')) if args.human else None
-        judge = CodexJudge(args.judge_model) if args.llm_judge or args.pairwise else None
+        judge = CodexJudge(args.judge_model, rubric=rubric) if args.llm_judge or args.pairwise else None
         qualitative = await evaluate(
             report, interactions=interactions, simulate_feedback=args.simulate_feedback,
             human=human, judge=judge, score=args.llm_judge, pairwise=args.pairwise,
             turn_count=args.turn_count, feedback=args.feedback,
-            candidate=args.candidate, max_judgments=args.max_judgments)
+            candidate=args.candidate, max_judgments=args.max_judgments, rubric=rubric)
         (out / 'qualitative.json').write_text(
             json.dumps(qualitative, ensure_ascii=False, indent=2, allow_nan=False) + '\n',
             encoding='utf-8')
