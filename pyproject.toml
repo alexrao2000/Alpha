@@ -50,6 +50,7 @@ alpha = ["templates/*.html"]
 "share/alpha-agent-lab/examples/adapter" = ["examples/adapter/adapter.json", "examples/adapter/cases.json", "examples/adapter/grader.py", "examples/adapter/worker.py"]
 
 "share/alpha-agent-lab/docs" = ["docs/adapters.md", "docs/experiments.md"]
+"share/alpha-agent-lab/examples/rubrics" = ["examples/rubrics/writing-quality.json"]
 
 [tool.mypy]
 python_version = "3.11"
