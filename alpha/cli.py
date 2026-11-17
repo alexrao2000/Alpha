@@ -67,7 +67,61 @@ def parser() -> argparse.ArgumentParser:
     qualitative.add_argument('--pairwise', action='store_true', help='Blindly compare candidate and baseline holdout outputs')
     qualitative.add_argument('--judge-model', help='Explicit Codex model; without it uses CLI default')
     qualitative.add_argument('--max-judgments', type=int, default=12, help='Maximum additional model calls, shared between judge methods')
+    quick = commands.add_parser('q', help='Shortcuts for optional evaluations of the latest saved run')
+    quick.add_argument('mode', choices=('demo', 'judge', 'pair', 'human', 'turns', 'all'),
+                       help='demo=synthetic feedback, judge=LLM scores+pairwise, pair=pairwise only, human=review template, turns=real conversations, all=all demos')
+    quick.add_argument('path', type=Path, nargs='?', help='Experiment JSON or run directory (default: latest in ./runs)')
+    quick.add_argument('--out', type=Path, help='Destination for qualitative files (default: run directory)')
+    quick.add_argument('--candidate', help='Override the selected candidate')
+    quick.add_argument('--interactions', type=Path, help='Observed conversation/feedback records for turns or all')
+    quick.add_argument('--human', type=Path, help='Completed human-review JSON for human or all')
+    quick.add_argument('--judge-model', help='Codex judge model; defaults to the current CLI model')
+    quick.add_argument('--max-judgments', type=int, default=12, help='Cap on additional LLM judging calls')
     return result
+
+
+
+def resolve_experiment_path(path: Path | None) -> Path:
+    """Find a saved experiment without guessing agent steps or creating a run."""
+    if path is None:
+        files = [p for p in Path('runs').glob('*/experiment.json') if p.is_file()]
+        if not files:
+            raise ValueError('No saved experiments in ./runs; pass a run directory or experiment.json.')
+        path = max(files, key=lambda p: (p.stat().st_mtime_ns, str(p)))
+    elif path.is_dir():
+        path = path / 'experiment.json'
+    if not path.is_file():
+        raise ValueError(f'No experiment.json found at {path}.')
+    return path
+
+
+def expand_quick_command(args: argparse.Namespace) -> argparse.Namespace:
+    """Translate short presets into the existing independent feature switches."""
+    if args.command != 'q':
+        return args
+    mode = args.mode
+    if mode == 'turns' and args.interactions is None:
+        raise ValueError('Turn counts need real messages: pass --interactions FILE, or use q demo.')
+    if mode in ('judge', 'pair', 'demo') and args.interactions is not None:
+        raise ValueError('Use q turns or q all when supplying --interactions.')
+    if mode not in ('human', 'all') and args.human is not None:
+        raise ValueError('Use q human or q all to load a completed human review.')
+    return argparse.Namespace(
+        command='qualitative',
+        path=resolve_experiment_path(args.path),
+        out=args.out,
+        candidate=args.candidate,
+        turn_count=mode in ('turns', 'all'),
+        feedback=mode in ('turns', 'all'),
+        interactions=args.interactions,
+        simulate_feedback=mode in ('demo', 'all') and args.interactions is None,
+        human_template=mode in ('human', 'all') and args.human is None,
+        human=args.human,
+        llm_judge=mode in ('judge', 'all'),
+        pairwise=mode in ('judge', 'pair', 'all'),
+        judge_model=args.judge_model,
+        max_judgments=args.max_judgments,
+    )
 
 
 def write_outputs(report, out: Path) -> None:
@@ -93,8 +147,9 @@ def write_outputs(report, out: Path) -> None:
 
 async def run(args) -> int:
     if args.command == 'qualitative':
-        report = json.loads(args.path.read_text(encoding='utf-8'))
-        out = (args.out or args.path.resolve().parent).resolve()
+        path = resolve_experiment_path(args.path)
+        report = json.loads(path.read_text(encoding='utf-8'))
+        out = (args.out or path.resolve().parent).resolve()
         out.mkdir(parents=True, exist_ok=True)
         if args.human_template:
             template = human_review_template(report, args.candidate)
@@ -222,6 +277,7 @@ def main(argv=None) -> int:
         print('support (scripted or live), crewai-game-builder, swarm-handoff, crewai-self-review\nUser fleets: experiment --adapter path/to/adapter.json')
         return 0
     try:
+        args = expand_quick_command(args)
         return asyncio.run(run(args))
     except (asyncio.CancelledError, KeyboardInterrupt):
         print('Alpha: Experiment cancelled; completed evidence remains resumable.', file=sys.stderr)
