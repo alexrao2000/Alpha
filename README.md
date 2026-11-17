@@ -54,34 +54,34 @@ Comparing the LLM's judgments with human judgments provides a **reference baseli
 
 Install the CLI once:
 
-\`\`\`sh
+```sh
 python3 -m pip install -e .
-\`\`\`
+```
 
-These optional commands use the most recent saved experiment in \`./runs\` unless you pass a run directory or \`experiment.json\`:
+These optional commands use the most recent saved experiment in `./runs` unless you pass a run directory or `experiment.json`:
 
 | Command | What it does |
 | --- | --- |
-| \`alpha q demo\` | Simulated feedback, corrections, and conversation turn counts |
-| \`alpha q judge\` | LLM 1–5 scores and blind A/B comparisons |
-| \`alpha q pair\` | LLM A/B comparisons only |
-| \`alpha q human\` | Produce an offline human-review page with 1–5 and blind A/B questions |
-| \`alpha q calibrate --human FILE\` | Compare completed human ratings with previously saved LLM judgments |
-| \`alpha q turns --interactions messages.json\` | Count actual conversation turns and explicit corrections |
-| \`alpha q all\` | Demonstrate the available methods (including model calls) |
+| `alpha q demo` | Simulated feedback, corrections, and conversation turn counts |
+| `alpha q judge` | LLM 1–5 scores and blind A/B comparisons |
+| `alpha q pair` | LLM A/B comparisons only |
+| `alpha q human` | Produce an offline human-review page with 1–5 and blind A/B questions |
+| `alpha q calibrate --human FILE` | Compare completed human ratings with previously saved LLM judgments |
+| `alpha q turns --interactions messages.json` | Count actual conversation turns and explicit corrections |
+| `alpha q all` | Demonstrate the available methods (including model calls) |
 
 To **compare human and LLM judgment**:
 
-\`\`\`sh
+```sh
 alpha q human
 # Open the generated human-review.html; rate outputs and download human-review-completed.json
 alpha q judge --max-judgments 8
 alpha q calibrate --human /path/to/human-review-completed.json
-\`\`\`
+```
 
-The last command reads the prior \`qualitative.json\`, **makes no additional model calls**, and writes \`calibration.json\` and \`calibration-report.html\` with the 2 × 2 matrix and matched agreement analysis. To use older or separately stored results, pass \`alpha q calibrate runs/MY-RUN --human FILE --judge-results PATH\`. Creating a blank human-review page does not overwrite saved model judgments.
+The last command reads the prior `qualitative.json`, **makes no additional model calls**, and writes `calibration.json` and `calibration-report.html` with the 2 × 2 matrix and matched agreement analysis. To use older or separately stored results, pass `alpha q calibrate runs/MY-RUN --human FILE --judge-results PATH`. Creating a blank human-review page does not overwrite saved model judgments.
 
-All evaluation modes are **off by default**, and none changes Alpha's existing objective grading or selection. \`judge\`, \`pair\`, and \`all\` make additional model calls excluded from the original experiment's cost accounting. \`demo\` is synthetic data derived from known pass/fail outcomes; it is not independent evidence about users. For privacy, only use an LLM judge with data permitted to leave your environment.
+All evaluation modes are **off by default**, and none changes Alpha's existing objective grading or selection. `judge`, `pair`, and `all` make additional model calls excluded from the original experiment's cost accounting. `demo` is synthetic data derived from known pass/fail outcomes; it is not independent evidence about users. For privacy, only use an LLM judge with data permitted to leave your environment.
 
 See [the qualitative evaluation guide](docs/qualitative.md) for input formats and limitations.
 
