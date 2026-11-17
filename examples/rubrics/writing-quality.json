@@ -1,0 +1,44 @@
+{
+  "id": "writing-quality",
+  "version": "1.0",
+  "purpose": "Evaluate how well the produced writing serves the specific assignment. Review the actual text, not whether a structural checker passed.",
+  "criteria": [
+    {
+      "id": "task_fit",
+      "label": "Task fit",
+      "description": "Does the writing address the requested topic, purpose, and intended audience?"
+    },
+    {
+      "id": "completeness",
+      "label": "Completeness",
+      "description": "Does it contain the important ideas requested, without material omissions?"
+    },
+    {
+      "id": "clarity",
+      "label": "Clarity",
+      "description": "Is it understandable, coherent, and easy to follow?"
+    },
+    {
+      "id": "style",
+      "label": "Style",
+      "description": "Does its tone, voice, and presentation fit the user-specified style?"
+    },
+    {
+      "id": "constraints",
+      "label": "Constraints",
+      "description": "Does it honor instructions such as length, format, or prohibited content?"
+    }
+  ],
+  "anchors": {
+    "1": "Poor: largely irrelevant or fails critical requirements.",
+    "2": "Weak: relevant fragments but major omissions or style/constraint violations.",
+    "3": "Adequate: useful draft with several noticeable weaknesses.",
+    "4": "Good: meets the assignment with only minor issues.",
+    "5": "Excellent: well-matched, polished writing that fully satisfies the visible assignment."
+  },
+  "pairwise": {
+    "instruction": "Read both outputs for the same assignment. Compare task fit, completeness, clarity, style, and stated constraints. Do not reward length by itself.",
+    "tie_rule": "Choose tie if neither text is meaningfully better, including when both are poor. Explain the most important consideration."
+  },
+  "limitations": "Judge only requirements visible in the task. If important context is missing, say so in the reason rather than guessing. Hidden executable checks are not a substitute for reading quality."
+}
