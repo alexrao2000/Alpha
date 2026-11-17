@@ -19,6 +19,7 @@ from .accounting import BudgetPolicy
 from .report import render_report
 from .transformations import expanded_variants, validate_variants
 from .qualitative import CodexJudge, evaluate, human_review_template, calibrate_saved
+from .human_review import render_human_review
 
 
 def parser() -> argparse.ArgumentParser:
@@ -187,11 +188,14 @@ async def run(args) -> int:
             template = human_review_template(report, args.candidate)
             (out / 'human-review-template.json').write_text(
                 json.dumps(template, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+            (out / 'human-review.html').write_text(
+                render_human_review(report, template), encoding='utf-8')
             if not any((args.simulate_feedback, args.turn_count, args.feedback,
                         args.llm_judge, args.pairwise, args.human)):
                 # A blank questionnaire is not an evaluation. Do not overwrite
                 # previously saved LLM judgments needed for calibration.
                 print(json.dumps({'human_template': str(out / 'human-review-template.json'),
+                                  'human_review_page': str(out / 'human-review.html'),
                                   'model_judgment_calls': 0}, indent=2))
                 return 0
         interactions = json.loads(args.interactions.read_text(encoding='utf-8')) if args.interactions else None
@@ -210,6 +214,7 @@ async def run(args) -> int:
         print(json.dumps({'qualitative': str(out / 'qualitative.json'),
                           'report': str(out / 'qualitative-report.html'),
                           'human_template': str(out / 'human-review-template.json') if args.human_template else None,
+                          'human_review_page': str(out / 'human-review.html') if args.human_template else None,
                           'methods': qualitative['methods'],
                           'model_judgment_calls': qualitative['model_judgment_calls']}, indent=2))
         return 0
