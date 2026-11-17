@@ -43,9 +43,35 @@ This is one trial per game with a Codex-backed model adapter. The upstream crew 
 
 ## Optional subjective evaluation demos
 
-Alongside objective grading, Alpha can now demonstrate **LLM-as-judge scores, blind pairwise preferences, manual human review, conversation turn counts, follow-up/correction rates, and simulated user satisfaction**. Every mode is explicitly opt-in, runs after a saved experiment, and leaves the optimization decision unchanged. Synthetic feedback is always labeled; LLM judges make additional unaccounted-for model calls.
+Alpha includes **opt-in** quality evaluations alongside its objective checks: LLM-as-judge scores, blind pairwise comparisons, human reviews, conversation turn counts, follow-up/correction rates, and simulated user feedback. These run **after** a saved experiment and do not change the selected candidate or validation decision.
 
-After installing with `python3 -m pip install -e .`, try `alpha q demo` (synthetic turn-count demo), `alpha q judge` (LLM scoring and blind comparisons), or `alpha q human` (manual review template). The shortcuts use the newest saved run in `./runs` unless you supply one. See [the qualitative evaluation guide](docs/qualitative.md) for more commands, JSON examples, and privacy limits.
+Install the CLI once from the repository checkout:
+
+```sh
+python3 -m pip install -e .
+```
+
+Then use these shortcuts:
+
+| Command | What it does |
+| --- | --- |
+| `alpha q demo` | Demonstrate simulated feedback, follow-ups, corrections, and turn counts (not real user evidence) |
+| `alpha q judge` | Score holdout results with an LLM and compare baseline vs. candidate blindly |
+| `alpha q pair` | Run blind pairwise LLM comparisons only |
+| `alpha q human` | Generate a template for manual human ratings and preferences |
+| `alpha q turns --interactions messages.json` | Count real user/assistant turns and summarize supplied corrections and feedback |
+| `alpha q all` | Run all demonstrations, including additional LLM judgments |
+
+By default, `alpha q` uses the newest `./runs/*/experiment.json`. To select a particular experiment or limit additional model calls:
+
+```sh
+alpha q judge runs/my-experiment --max-judgments 4
+alpha q all runs/my-experiment --judge-model MODEL_NAME
+```
+
+The commands create `qualitative.json` and `qualitative-report.html` in the run directory; use `--out DIR` to avoid replacing earlier qualitative reports. `judge`, `pair`, and `all` make **additional model calls** that are not included in the original experiment's cost figures. `demo` uses synthetic feedback derived from existing pass/fail results; it is only a demonstration, not independent evidence. Turn counts from actual conversations require an `--interactions` file.
+
+For the full input format, individual switches, and limitations, see [the qualitative evaluation guide](docs/qualitative.md).
 
 ## Run the prototype
 
