@@ -7,7 +7,7 @@ name = "alpha-agent-lab"
 version = "0.1.0"
 description = "Measure the contribution of individual agent steps to completed work."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 license = "MIT"
 dependencies = []
 
@@ -53,5 +53,5 @@ alpha = ["templates/*.html"]
 "share/alpha-agent-lab/examples/rubrics" = ["examples/rubrics/writing-quality.json"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.14"
 check_untyped_defs = true

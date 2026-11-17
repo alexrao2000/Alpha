@@ -2,17 +2,22 @@ name: Alpha tests
 
 on:
   push:
-    branches: [main, 'feat/optional-qualitative-evals']
+    branches: [main]
   pull_request:
 
 jobs:
   python-tests:
+    name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.14', '3.15']
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version }}
       - name: Compile sources
         run: python -m compileall -q alpha test
       - name: Unit tests
