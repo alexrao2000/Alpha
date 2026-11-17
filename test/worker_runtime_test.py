@@ -3,6 +3,8 @@ import asyncio
 from contextlib import redirect_stdout
 import io
 import json
+import shlex
+import sys
 from pathlib import Path
 import tempfile
 import unittest
@@ -124,6 +126,47 @@ class RuntimeTests(unittest.TestCase):
             "expert": {"instructions": "Review.", "skills": ["expert.md"], "can_delegate": False}}}))
         identities = load_identities(path)
         self.assertEqual(identities["expert"]["skills"][0]["instructions"], "Use careful analysis.")
+
+    def test_command_executor_runs_real_subprocess(self):
+        script = Path(self.folder.name) / "agent.py"
+        script.write_text(
+            'import json,sys\n'
+            'request=json.load(sys.stdin)\n'
+            'print(json.dumps({"action":"complete","result":request["operation_id"],"children":[]}))\n'
+        )
+        command = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))}"
+        store = RunStore(self.db)
+        root = store.start("do real work", "general", self.identities, self.limits,
+                           command=command, read_only_command=True)
+        result = asyncio.run(run_workers(store, workers=1))
+        self.assertEqual(result["counts"]["done"], 1)
+        self.assertEqual(json.loads(result["tasks"][0]["result"]), root)
+
+    def test_unsafe_command_failure_requires_operator_reconciliation(self):
+        command = f"{shlex.quote(sys.executable)} -c 'import sys;sys.exit(3)'"
+        store = RunStore(self.db)
+        root = store.start("do work", "general", self.identities, self.limits,
+                           command=command)
+        result = asyncio.run(run_workers(store, workers=1))
+        self.assertEqual(result["counts"]["needs_review"], 1)
+        self.assertEqual(result["tasks"][0]["attempts"], 1)
+        store.resolve(root, "failed")
+        self.assertEqual(store.status()["counts"]["failed"], 1)
+
+    def test_unsafe_command_expired_lease_is_not_retried(self):
+        store = RunStore(self.db)
+        root = store.start("do work", "general", self.identities, self.limits,
+                           command="missing-external-agent")
+        first = store.claim("dead", 2, 120, 2)
+        conn = store.connect()
+        conn.execute("UPDATE tasks SET lease_until=0 WHERE id=?", (root,))
+        conn.close()
+        self.assertIsNone(store.claim("other", 2, 120, 2))
+        self.assertEqual(store.status()["counts"]["needs_review"], 1)
+        self.assertFalse(store.settle(first, {"action": "complete", "result": "bad",
+                                              "children": []}, store.config()))
+        store.resolve(root, "retry")
+        self.assertEqual(store.status()["counts"]["queued"], 1)
 
     def test_cli_status_does_not_invoke_provider(self):
         self.store()
