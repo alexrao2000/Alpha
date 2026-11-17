@@ -7,12 +7,14 @@ from __future__ import annotations
 
 import asyncio
 import json
+import shlex
 from pathlib import Path
 import sqlite3
 import time
 import uuid
 
 from .backends import CodexBackend
+from .processes import run_process
 from .orchestration import classify, TIERS
 
 RESPONSE_SCHEMA = {
@@ -87,7 +89,8 @@ class RunStore:
         finally:
             conn.close()
 
-    def start(self, prompt: str, identity: str, identities: dict, limits: dict) -> str:
+    def start(self, prompt: str, identity: str, identities: dict, limits: dict, *,
+              command: str | None = None, read_only_command: bool = False) -> str:
         if not prompt.strip() or identity not in identities:
             raise ValueError("Provide a task prompt and a defined agent identity.")
         if self.path.exists():
@@ -112,7 +115,8 @@ class RunStore:
             root = uuid.uuid4().hex
             now = time.time()
             conn.execute("INSERT INTO settings VALUES (?,?)", (
-                "config", json.dumps({"root": root, "identities": identities, "limits": limits})))
+                "config", json.dumps({"root": root, "identities": identities, "limits": limits,
+                                       "command": command, "read_only": command is None or read_only_command})))
             conn.execute("""INSERT INTO tasks
                 (id,parent_id,identity,prompt,metadata,tier,depth,state,created,updated)
                 VALUES (?,NULL,?,?,?,0,0,'queued',?,?)""",
@@ -134,16 +138,27 @@ class RunStore:
     def claim(self, worker: str, tier: int, lease_seconds: float, attempts: int) -> dict | None:
         def tx(conn):
             now = time.time()
-            expired = conn.execute("""SELECT id,parent_id FROM tasks WHERE
-                state='running' AND lease_until<=? AND attempts>=?""",
-                (now, attempts)).fetchall()
-            conn.execute("""UPDATE tasks SET state='failed',error='Lease expired after final attempt',
-                lease_owner=NULL,lease_token=NULL,lease_until=NULL,updated=?
-                WHERE state='running' AND lease_until<=? AND attempts>=?""",
-                (now, now, attempts))
-            conn.execute("""UPDATE tasks SET state='queued',lease_owner=NULL,
-                lease_token=NULL,lease_until=NULL,updated=?
-                WHERE state='running' AND lease_until<=?""", (now, now))
+            settings = json.loads(conn.execute(
+                "SELECT value FROM settings WHERE key='config'").fetchone()[0])
+            if settings.get("read_only", True):
+                expired = conn.execute("""SELECT id,parent_id FROM tasks WHERE
+                    state='running' AND lease_until<=? AND attempts>=?""",
+                    (now, attempts)).fetchall()
+                conn.execute("""UPDATE tasks SET state='failed',error='Lease expired after final attempt',
+                    lease_owner=NULL,lease_token=NULL,lease_until=NULL,updated=?
+                    WHERE state='running' AND lease_until<=? AND attempts>=?""",
+                    (now, now, attempts))
+                conn.execute("""UPDATE tasks SET state='queued',lease_owner=NULL,
+                    lease_token=NULL,lease_until=NULL,updated=?
+                    WHERE state='running' AND lease_until<=?""", (now, now))
+            else:
+                expired = conn.execute("""SELECT id,parent_id FROM tasks WHERE
+                    state='running' AND lease_until<=?""", (now,)).fetchall()
+                # A mutating command may have succeeded before its worker disappeared.
+                conn.execute("""UPDATE tasks SET state='needs_review',
+                    error='Uncertain external side effects after expired lease',
+                    lease_owner=NULL,lease_token=NULL,lease_until=NULL,updated=?
+                    WHERE state='running' AND lease_until<=?""", (now, now))
             for item in expired:
                 self._parents(conn, item["parent_id"], now)
             task = conn.execute("""SELECT * FROM tasks WHERE state='queued' AND tier<=?
@@ -177,7 +192,7 @@ class RunStore:
             if parent["state"] in ("waiting", "blocked"):
                 if states and states <= {"done"}:
                     conn.execute("UPDATE tasks SET state='queued',updated=? WHERE id=?", (now, parent_id))
-                elif states & {"failed", "blocked"}:
+                elif states & {"failed", "blocked", "needs_review"}:
                     conn.execute("UPDATE tasks SET state='blocked',updated=? WHERE id=?", (now, parent_id))
             parent_id = parent["parent_id"]
 
@@ -234,14 +249,36 @@ class RunStore:
             row = conn.execute("SELECT * FROM tasks WHERE id=?", (task["id"],)).fetchone()
             if row["state"] != "running" or row["lease_token"] != task["lease_token"] or row["lease_until"] <= now:
                 return False
-            state = "queued" if row["attempts"] < attempts else "failed"
+            settings = json.loads(conn.execute(
+                "SELECT value FROM settings WHERE key='config'").fetchone()[0])
+            state = ("needs_review" if not settings.get("read_only", True)
+                     else "queued" if row["attempts"] < attempts else "failed")
             conn.execute("""UPDATE tasks SET state=?,error=?,updated=?,
                 lease_owner=NULL,lease_token=NULL,lease_until=NULL WHERE id=?""",
                 (state, message[:800], now, row["id"]))
-            if state == "failed":
+            if state in ("failed", "needs_review"):
                 self._parents(conn, row["parent_id"], now)
             return True
         return self.transact(tx)
+
+    def resolve(self, task_id: str, decision: str, result: str | None = None) -> None:
+        """An operator confirms an external effect or explicitly authorizes replay."""
+        if decision not in ("done", "failed", "retry"):
+            raise ValueError("Decision must be done, failed, or retry.")
+        if decision == "done" and result is None:
+            raise ValueError("Completing an uncertain task requires a confirmed result.")
+        def tx(conn):
+            row = conn.execute("SELECT * FROM tasks WHERE id=?", (task_id,)).fetchone()
+            if row is None or row["state"] != "needs_review":
+                raise ValueError("Only needs_review tasks can be reconciled.")
+            now = time.time()
+            state = "queued" if decision == "retry" else decision
+            attempts = 0 if decision == "retry" else row["attempts"]
+            conn.execute("""UPDATE tasks SET state=?,result=?,error=NULL,attempts=?,
+                lease_owner=NULL,lease_token=NULL,lease_until=NULL,updated=? WHERE id=?""",
+                (state, json.dumps(result) if state == "done" else None, attempts, now, task_id))
+            self._parents(conn, row["parent_id"], now)
+        self.transact(tx)
 
     def status(self) -> dict:
         conn = self.connect()
@@ -251,7 +288,7 @@ class RunStore:
                 wave,attempts,result,error FROM tasks ORDER BY depth,created,id""")]
             return {"root": config["root"], "tasks": tasks,
                     "counts": {state: sum(t["state"] == state for t in tasks)
-                               for state in ("queued", "running", "waiting", "done", "failed", "blocked")}}
+                               for state in ("queued", "running", "waiting", "done", "failed", "blocked", "needs_review")}}
         finally:
             conn.close()
 
@@ -296,9 +333,20 @@ async def execute(store: RunStore, task: dict, config: dict, model: str | None,
                     stop.set()
     heartbeat = asyncio.create_task(renew())
     try:
-        backend = backend_factory(model)
-        response = await backend.complete(schema=RESPONSE_SCHEMA, prompt=task_prompt(task, config))
-        reply = response["output"]
+        if config.get("command"):
+            payload = {
+                "task_id": task["id"], "operation_id": task["id"],
+                "attempt": task["attempts"], "identity": task["identity"],
+                "prompt": task_prompt(task, config), "schema": RESPONSE_SCHEMA,
+            }
+            stdout = await run_process(shlex.split(config["command"]),
+                                       json.dumps(payload, ensure_ascii=False),
+                                       timeout=300, label="Agent command")
+            reply = json.loads(stdout)
+        else:
+            backend = backend_factory(model)
+            response = await backend.complete(schema=RESPONSE_SCHEMA, prompt=task_prompt(task, config))
+            reply = response["output"]
         if stop.is_set():
             return
         if not isinstance(reply, dict) or reply.get("action") not in ("complete", "delegate"):
