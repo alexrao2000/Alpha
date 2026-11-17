@@ -166,15 +166,31 @@ class RunStore:
                     lease_owner=NULL,lease_token=NULL,lease_until=NULL,updated=?
                     WHERE state='running' AND lease_until<=?""", (now, now))
             for item in expired:
+                mark_unknown(conn, item["lease_token"])
                 self._parents(conn, item["parent_id"], now)
-            task = conn.execute("""SELECT * FROM tasks WHERE state='queued' AND tier<=?
-                ORDER BY tier DESC,created,id LIMIT 1""", (tier,)).fetchone()
+            block_failed_dependencies(conn, now)
+            reason = budget_stop_reason(conn, settings["limits"])
+            if reason:
+                queued = conn.execute("SELECT parent_id FROM tasks WHERE state='queued'").fetchall()
+                conn.execute("""UPDATE tasks SET state='blocked',error=?,updated=?
+                    WHERE state='queued'""", (reason, now))
+                for item in queued:
+                    self._parents(conn, item["parent_id"], now)
+                block_failed_dependencies(conn, now)
+                return None
+            task = conn.execute("""SELECT t.* FROM tasks t WHERE t.state='queued' AND t.tier<=?
+                AND NOT EXISTS (
+                    SELECT 1 FROM task_dependencies d JOIN tasks prerequisite ON prerequisite.id=d.depends_on_id
+                    WHERE d.task_id=t.id AND prerequisite.state!='done')
+                ORDER BY t.tier DESC,t.created,t.id LIMIT 1""", (tier,)).fetchone()
             if task is None:
                 return None
             token = uuid.uuid4().hex
             conn.execute("""UPDATE tasks SET state='running',attempts=attempts+1,
                 lease_owner=?,lease_token=?,lease_until=?,updated=? WHERE id=?""",
                 (worker, token, now + lease_seconds, now, task["id"]))
+            size = next(name for name, value in TIERS.items() if value == task["tier"])
+            start_attempt(conn, task["id"], token, (models or {}).get(size))
             children = conn.execute("""SELECT identity,result FROM tasks WHERE parent_id=?
                 ORDER BY created,id""", (task["id"],)).fetchall()
             return {**dict(task), "lease_token": token,
