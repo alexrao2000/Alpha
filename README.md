@@ -113,10 +113,12 @@ alpha orch status --db runs/design.sqlite
 alpha orch resume --db runs/design.sqlite --workers 2
 ```
 
-This uses actual Codex CLI model calls, not the earlier scripted demo. Optional
-agent identity configuration loads skills dynamically, while task size metadata
-determines scheduling priority and compatible worker/model tier. Calls are
-read-only; tools that can create external side effects are not yet supported.
+The default executes actual read-only Codex CLI model calls, not the
+scripted demo. With `--command "python3 my-agent.py"`, Alpha instead runs
+your external agent worker program. Because that program can have side effects,
+interrupted or failed work is marked `needs_review` rather than blindly replayed.
+Optional agent identities load skills dynamically, and task metadata determines
+scheduling priority and compatible worker/model tiers.
 
 See [the real agent runner guide](docs/agent-runner.md) for identities, leases,
 limits, usage, and implementation boundaries. `alpha orch demo` remains a
