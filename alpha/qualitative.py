@@ -8,7 +8,6 @@ are extra calls and must be explicitly enabled.
 from __future__ import annotations
 
 from collections import Counter
-from copy import deepcopy
 from hashlib import sha256
 import json
 from pathlib import Path
@@ -226,7 +225,14 @@ def _summary(rows: list[dict]) -> dict:
     return {
         "count": len(rows),
         "mean_user_turns": round(sum(r["user_turns"] for r in rows) / len(rows), 3),
+        "mean_assistant_turns": round(sum(r["assistant_turns"] for r in rows) / len(rows), 3),
+        "mean_follow_up_turns": round(sum(r["follow_up_turns"] for r in rows) / len(rows), 3),
         "follow_up_rate": round(sum(r["follow_up_turns"] > 0 for r in rows) / len(rows), 3),
+        "abandonment_rate": (
+            round(sum(r["abandoned"] is True for r in rows) /
+                  sum(r["abandoned"] is not None for r in rows), 3)
+            if any(r["abandoned"] is not None for r in rows) else None
+        ),
         "correction_rate_per_follow_up": (
             round(sum(r["correction_turns"] for r in rows) /
                   sum(r["follow_up_turns"] for r in rows), 3)
