@@ -57,7 +57,7 @@ SCORE_SCHEMA = {
     "type": "object", "additionalProperties": False,
     "required": ["score", "reason"],
     "properties": {
-        "score": {"type": "integer", "minimum": 1, "maximum": 5},
+        "score": {"type": "integer"},
         "reason": {"type": "string"},
     },
 }
