@@ -100,6 +100,33 @@ All evaluation modes are **off by default**, and none changes Alpha's existing o
 
 See [the qualitative evaluation guide](docs/qualitative.md) for input formats and limitations.
 
+## Subagent orchestration lab
+
+Alpha also includes an opt-in, **scripted** orchestration simulator. It demonstrates how to coordinate parent/subagent dependencies without worker starvation, prevent circular dependency graphs, and route work by deterministic complexity estimates rather than asking an LLM which worker to use.
+
+| Problem | Simulated safeguard |
+| --- | --- |
+| A waits on B waits on A | Reject dependency cycles at insertion |
+| Every worker waits on a child | Persist the waiting parent, release its worker slot, and resume on child completion |
+| Recursive subagent explosion | Bound delegation depth and children per parent |
+| Large tasks consume undersized execution | Route large work to larger model/worker tiers using token, file, tool, and capability metadata |
+| Workers tied to a particular agent | Generic workers load the required identity, skills, and permissions at claim time |
+| A crash after a mutating tool | Mark possible side effects before the tool call; avoid blind replay and require reconciliation |
+
+Try the demos:
+
+```sh
+alpha orch demo
+alpha orch demo --scenario starvation
+alpha orch demo --scenario cycles
+alpha orch demo --scenario routing
+alpha orch demo --scenario side-effects
+alpha orch demo --scenario skills
+alpha orch demo --scenario limits
+alpha orch demo --verbose --out runs/subagent-lab.json
+```
+
+These runs do **not** invoke real agents or providers and do not change Alpha's optimization decisions. See [the orchestration guide](docs/orchestration.md) for the exact scheduling rules, safeguards, limitations, and failure examples.
 ## Run the prototype
 
 The experiment engine, CLI, model transport, and HTML report renderer use Python 3.11 or newer with no third-party runtime dependencies. Run these commands from the repository checkout. Node.js 24 or newer is needed only for the optional eve agent-authoring runtime.
