@@ -32,14 +32,19 @@ def parser() -> argparse.ArgumentParser:
     commands.add_parser('adapters', help='List bundled fleets and the user adapter entry point')
     commands.add_parser('rubrics', help='List bundled and operator-defined grading rubric names')
     orch = commands.add_parser('orch', help='Run live agent tasks with durable worker scheduling (or demo)')
-    orch.add_argument('mode', choices=('demo', 'run', 'resume', 'status'))
-    orch.add_argument('task', nargs='?', help='Task prompt for run')
+    orch.add_argument('mode', choices=('demo', 'run', 'resume', 'status', 'resolve'))
+    orch.add_argument('task', nargs='?', help='Task prompt for run, or task ID for resolve')
     orch.add_argument('--scenario', choices=('all', 'starvation', 'cycles', 'routing', 'side-effects', 'skills', 'limits'),
                       default='all', help='Which orchestration failure mode to demonstrate')
     orch.add_argument('--out', type=Path, help='Write the full JSON trace to this path')
     orch.add_argument('--verbose', action='store_true', help='Print task details or demo events')
     orch.add_argument('--db', type=Path, help='SQLite state path (required for resume/status)')
     orch.add_argument('--agents', type=Path, help='Identity JSON with per-agent instructions and skill paths')
+    orch.add_argument('--command', help='External agent command reading JSON on stdin and writing JSON on stdout')
+    orch.add_argument('--read-only-command', action='store_true',
+                      help='Assert that the external command cannot have side effects; enables safe retries')
+    orch.add_argument('--decision', choices=('done', 'failed', 'retry'), help='Resolution for a needs_review task')
+    orch.add_argument('--result', help='Confirmed result text when resolving an uncertain task as done')
     orch.add_argument('--identity', help='Root agent identity; defaults to general or the first configured')
     orch.add_argument('--workers', type=int, default=2, help='Concurrent real agent calls')
     orch.add_argument('--tiers', help='Comma-separated worker capacities: small,medium,large')
@@ -364,7 +369,7 @@ def main(argv=None) -> int:
             return 0
         try:
             if args.mode != 'run' and not args.db:
-                raise ValueError('Pass --db to resume or inspect a run.')
+                raise ValueError('Pass --db to resume, resolve, or inspect a run.')
             db = args.db or Path('runs') / ('orch-' + timestamp().replace(':', '-').replace('.', '-') + '.sqlite')
             store = RunStore(db)
             if args.mode == 'run':
@@ -377,7 +382,12 @@ def main(argv=None) -> int:
                               max_attempts=args.max_attempts)
                 if any(not isinstance(x, int) or x < 1 for x in limits.values()):
                     raise ValueError('Delegation and retry limits must be positive integers.')
-                store.start(args.task, identity, identities, limits)
+                store.start(args.task, identity, identities, limits,
+                            command=args.command, read_only_command=args.read_only_command)
+            if args.mode == 'resolve':
+                if not args.task or not args.decision:
+                    raise ValueError('Resolve requires a task ID and --decision done|failed|retry.')
+                store.resolve(args.task, args.decision, args.result)
             if args.mode in ('run', 'resume'):
                 tiers = args.tiers.split(',') if args.tiers else None
                 models = {size: (getattr(args, 'model_' + size) or args.model)
