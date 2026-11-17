@@ -88,7 +88,6 @@ class RubricTests(unittest.TestCase):
         self.assertIn("Shared grading criteria", html)
         self.assertIn("Use the same grading rubric", html)
         self.assertIn("Relevance", html)
-        self.assertIn("5 — ", html) if False else None
         self.assertIn(rubric_record(load_rubric())["sha256"], html)
 
     def test_calibration_rejects_mismatched_or_missing_rubric(self):
