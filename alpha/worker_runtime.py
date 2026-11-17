@@ -292,6 +292,19 @@ class RunStore:
         finally:
             conn.close()
 
+    def cannot_progress(self, highest_tier: int) -> bool:
+        """Detect a queue no configured worker could ever service."""
+        conn = self.connect()
+        try:
+            running = conn.execute("SELECT count(*) FROM tasks WHERE state='running'").fetchone()[0]
+            eligible = conn.execute("""SELECT count(*) FROM tasks WHERE state='queued'
+                AND tier<=?""", (highest_tier,)).fetchone()[0]
+            pending = conn.execute("""SELECT count(*) FROM tasks WHERE state IN
+                ('queued','waiting')""").fetchone()[0]
+            return bool(pending and not running and not eligible)
+        finally:
+            conn.close()
+
     def finished(self) -> bool:
         conn = self.connect()
         try:
@@ -382,6 +395,8 @@ async def run_workers(store: RunStore, *, workers: int = 2, tiers: list[str] | N
                 await execute(store, task, config, models.get(size), backend_factory, lease_seconds)
             elif store.finished():
                 return
+            elif store.cannot_progress(max(TIERS[t] for t in tier_names)):
+                raise ValueError("No configured worker can execute the remaining task tiers.")
             else:
                 await asyncio.sleep(0.2)
     await asyncio.gather(*(worker(i) for i in range(workers)))
