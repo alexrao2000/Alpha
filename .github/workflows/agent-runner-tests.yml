@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'alpha/worker_runtime.py'
+      - 'alpha/guardrails.py'
+      - 'test/guardrails_test.py'
       - 'alpha/cli.py'
       - 'test/worker_runtime_test.py'
       - '.github/workflows/agent-runner-tests.yml'
@@ -10,6 +12,8 @@ on:
     branches: [main]
     paths:
       - 'alpha/worker_runtime.py'
+      - 'alpha/guardrails.py'
+      - 'test/guardrails_test.py'
       - 'alpha/cli.py'
       - 'test/worker_runtime_test.py'
       - '.github/workflows/agent-runner-tests.yml'

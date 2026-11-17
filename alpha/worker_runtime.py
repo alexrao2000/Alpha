@@ -18,7 +18,8 @@ from .processes import run_process
 from .orchestration import classify, TIERS
 from .guardrails import (ensure_tables, validate_limits, check_graph,
                          block_failed_dependencies, budget_snapshot,
-                         budget_stop_reason, start_attempt, mark_unknown, report_usage)
+                         budget_stop_reason, start_attempt, mark_unknown, report_usage,
+                         check_descendant_budget, reopen_reconciled_dependencies)
 
 RESPONSE_SCHEMA = {
     "type": "object", "additionalProperties": False,
@@ -94,10 +95,15 @@ class RunStore:
             conn.close()
 
     def start(self, prompt: str, identity: str, identities: dict, limits: dict, *,
-              command: str | None = None, read_only_command: bool = False) -> str:
+              command: str | None = None, read_only_command: bool = False,
+              models: dict | None = None) -> str:
         if not prompt.strip() or identity not in identities:
             raise ValueError("Provide a task prompt and a defined agent identity.")
         validate_limits(limits)
+        if limits.get("max_cost_usd") is not None:
+            prices = limits["prices"]
+            if any(not (models or {}).get(size) or (models or {})[size] not in prices for size in TIERS):
+                raise ValueError("A cost budget requires priced model IDs for every task tier.")
         if self.path.exists():
             raise ValueError("Run database already exists. Use orch resume instead.")
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -121,7 +127,8 @@ class RunStore:
             now = time.time()
             conn.execute("INSERT INTO settings VALUES (?,?)", (
                 "config", json.dumps({"root": root, "identities": identities, "limits": limits,
-                                       "command": command, "read_only": command is None or read_only_command})))
+                                       "command": command, "read_only": command is None or read_only_command,
+                                       "models": models or {}})))
             conn.execute("""INSERT INTO tasks
                 (id,parent_id,identity,prompt,metadata,tier,depth,state,created,updated)
                 VALUES (?,NULL,?,?,?,0,0,'queued',?,?)""",
@@ -169,6 +176,7 @@ class RunStore:
                 mark_unknown(conn, item["lease_token"])
                 self._parents(conn, item["parent_id"], now)
             block_failed_dependencies(conn, now)
+            reopen_reconciled_dependencies(conn, now)
             reason = budget_stop_reason(conn, settings["limits"])
             if reason:
                 queued = conn.execute("SELECT parent_id FROM tasks WHERE state='queued'").fetchall()
@@ -197,6 +205,29 @@ class RunStore:
                     "children": [dict(item) for item in children]}
         return self.transact(tx)
 
+    def add_dependency(self, task_id: str, depends_on_id: str) -> None:
+        """Atomically validate and add an optional cross-task dependency."""
+        def tx(conn):
+            settings = json.loads(conn.execute(
+                "SELECT value FROM settings WHERE key='config'").fetchone()[0])
+            limits = settings["limits"]
+            if not limits.get("allow_dependency_links", False):
+                raise ValueError("Cross-task dependencies are disabled for this run.")
+            task = conn.execute("SELECT state FROM tasks WHERE id=?", (task_id,)).fetchone()
+            target = conn.execute("SELECT state FROM tasks WHERE id=?", (depends_on_id,)).fetchone()
+            if task is None or target is None:
+                raise ValueError("Dependency references an unknown task.")
+            if task["state"] not in ("queued", "waiting"):
+                raise ValueError("Only queued or waiting tasks can add prerequisites.")
+            if target["state"] in ("failed", "blocked", "needs_review"):
+                raise ValueError("Cannot depend on a failed or blocked task.")
+            if task_id == depends_on_id:
+                raise ValueError("Dependency cycle detected.")
+            check_graph(conn, limits.get("max_dependency_depth"), [(task_id, depends_on_id)])
+            conn.execute("""INSERT OR IGNORE INTO task_dependencies(task_id,depends_on_id)
+                VALUES (?,?)""", (task_id, depends_on_id))
+        self.transact(tx)
+
     def heartbeat(self, task_id: str, token: str, seconds: float) -> bool:
         def tx(conn):
             now = time.time()
@@ -213,12 +244,15 @@ class RunStore:
             states = {r[0] for r in conn.execute("SELECT state FROM tasks WHERE parent_id=?", (parent_id,))}
             if parent["state"] in ("waiting", "blocked"):
                 if states and states <= {"done"}:
-                    conn.execute("UPDATE tasks SET state='queued',updated=? WHERE id=?", (now, parent_id))
+                    conn.execute("UPDATE tasks SET state='queued',error=NULL,updated=? WHERE id=?", (now, parent_id))
                 elif states & {"failed", "blocked", "needs_review"}:
-                    conn.execute("UPDATE tasks SET state='blocked',updated=? WHERE id=?", (now, parent_id))
+                    conn.execute("""UPDATE tasks SET state='blocked',
+                        error='Dependency failed or requires operator review',updated=? WHERE id=?""",
+                        (now, parent_id))
             parent_id = parent["parent_id"]
 
-    def settle(self, task: dict, reply: dict, config: dict) -> bool:
+    def settle(self, task: dict, reply: dict, config: dict, *,
+               usage: dict | None = None, model: str | None = None) -> bool:
         def tx(conn):
             now = time.time()
             row = conn.execute("SELECT * FROM tasks WHERE id=?", (task["id"],)).fetchone()
@@ -234,6 +268,7 @@ class RunStore:
                     or existing + len(children) > limits["max_children"]
                     or total + len(children) > limits["max_tasks"]):
                     raise ValueError("Delegation forbidden or task count/depth limit exceeded.")
+                check_descendant_budget(conn, row['id'], len(children), limits.get('max_descendants'))
                 validated = []
                 for child in children:
                     if (not isinstance(child, dict) or child.get("identity") not in config["identities"]
@@ -250,6 +285,7 @@ class RunStore:
                         VALUES (?,?,?,?,?,?,?,'queued',?,?)""", (
                         uuid.uuid4().hex, row["id"], child["identity"], child["prompt"],
                         json.dumps(child["metadata"]), tier, row["depth"] + 1, now, now))
+                check_graph(conn, limits.get('max_dependency_depth'))
                 conn.execute("""UPDATE tasks SET state='waiting',wave=wave+1,updated=?,
                     lease_owner=NULL,lease_token=NULL,lease_until=NULL WHERE id=?""",
                     (now, row["id"]))
@@ -260,12 +296,17 @@ class RunStore:
                     lease_owner=NULL,lease_token=NULL,lease_until=NULL WHERE id=?""",
                     (json.dumps(reply["result"]), now, row["id"]))
                 self._parents(conn, row["parent_id"], now)
+                reopen_reconciled_dependencies(conn, now)
             else:
                 raise ValueError("Unknown agent action.")
+            report_usage(conn, task["lease_token"], usage, model,
+                         config["limits"].get("prices") or {},
+                         config["limits"].get("max_cost_usd") is not None)
             return True
         return self.transact(tx)
 
-    def error(self, task: dict, message: str, attempts: int) -> bool:
+    def error(self, task: dict, message: str, attempts: int, *,
+              usage: dict | None = None, model: str | None = None) -> bool:
         def tx(conn):
             now = time.time()
             row = conn.execute("SELECT * FROM tasks WHERE id=?", (task["id"],)).fetchone()
@@ -280,6 +321,9 @@ class RunStore:
                 (state, message[:800], now, row["id"]))
             if state in ("failed", "needs_review"):
                 self._parents(conn, row["parent_id"], now)
+            report_usage(conn, task["lease_token"], usage, model,
+                         settings["limits"].get("prices") or {},
+                         settings["limits"].get("max_cost_usd") is not None)
             return True
         return self.transact(tx)
 
@@ -300,6 +344,7 @@ class RunStore:
                 lease_owner=NULL,lease_token=NULL,lease_until=NULL,updated=? WHERE id=?""",
                 (state, json.dumps(result) if state == "done" else None, attempts, now, task_id))
             self._parents(conn, row["parent_id"], now)
+            reopen_reconciled_dependencies(conn, now)
         self.transact(tx)
 
     def status(self) -> dict:
@@ -309,6 +354,7 @@ class RunStore:
             tasks = [dict(r) for r in conn.execute("""SELECT id,parent_id,identity,state,depth,
                 wave,attempts,result,error FROM tasks ORDER BY depth,created,id""")]
             return {"root": config["root"], "tasks": tasks,
+                    "budget": budget_snapshot(conn, config["limits"]),
                     "counts": {state: sum(t["state"] == state for t in tasks)
                                for state in ("queued", "running", "waiting", "done", "failed", "blocked", "needs_review")}}
         finally:
@@ -342,16 +388,18 @@ def task_prompt(task: dict, config: dict) -> str:
         f"\nSKILL {s['name']}\n{s['instructions']}" for s in identity["skills"])
     children = [{"identity": c["identity"], "result": json.loads(c["result"])}
                 for c in task["children"] if c["result"] is not None]
+    safety = ("Execute this task as a read-only agent. Do not call external tools, change files, "
+              "or perform real-world operations. " if not config.get("command") else "")
     return (
-        "Execute this task as a read-only agent. Do not call external tools, change files, "
-        "or perform real-world operations. Return only schema-compliant JSON. "
+        safety + "Return only schema-compliant JSON. "
         "Use action=complete, result=your answer, children=[] to finish. "
         "Use action=delegate, result='', children=[...] to create subagent tasks. "
         "You will release the worker slot while children execute and be resumed with their results. "
         "Do not repeat already-completed delegation. "
         f"Available identities: {json.dumps({k: {'can_delegate': v['can_delegate']} for k,v in config['identities'].items()})}. "
         f"Your identity: {task['identity']}; delegation allowed: {identity['can_delegate']}. "
-        f"Depth: {task['depth']}; delegation rounds used: {task['wave']}.\n"
+        f"Depth: {task['depth']}; delegation rounds used: {task['wave']}; "
+        f"limits: {json.dumps({k: v for k, v in config['limits'].items() if k != 'prices'})}.\n"
         f"ROLE INSTRUCTIONS\n{instructions}\nTASK\n{task['prompt']}\n"
         f"COMPLETED CHILD RESULTS\n{json.dumps(children, ensure_ascii=False)}")
 
@@ -359,6 +407,7 @@ def task_prompt(task: dict, config: dict) -> str:
 async def execute(store: RunStore, task: dict, config: dict, model: str | None,
                   backend_factory, lease_seconds: float):
     stop = asyncio.Event()
+    usage = None
     async def renew():
         while not stop.is_set():
             try:
@@ -378,19 +427,23 @@ async def execute(store: RunStore, task: dict, config: dict, model: str | None,
                                        json.dumps(payload, ensure_ascii=False),
                                        timeout=300, label="Agent command")
             reply = json.loads(stdout)
+            if isinstance(reply, dict):
+                usage = reply.pop("usage", None)
         else:
             backend = backend_factory(model)
             response = await backend.complete(schema=RESPONSE_SCHEMA, prompt=task_prompt(task, config))
             reply = response["output"]
+            usage = response.get("usage")
         if stop.is_set():
             return
         if not isinstance(reply, dict) or reply.get("action") not in ("complete", "delegate"):
             raise ValueError("Invalid agent action.")
         if not isinstance(reply.get("result"), str) or not isinstance(reply.get("children"), list):
             raise ValueError("Invalid agent response fields.")
-        store.settle(task, reply, config)
+        store.settle(task, reply, config, usage=usage, model=model)
     except Exception as exc:
-        store.error(task, f"{type(exc).__name__}: {exc}", config["limits"]["max_attempts"])
+        store.error(task, f"{type(exc).__name__}: {exc}", config["limits"]["max_attempts"],
+                    usage=usage, model=model)
     finally:
         stop.set()
         await heartbeat
@@ -405,13 +458,17 @@ async def run_workers(store: RunStore, *, workers: int = 2, tiers: list[str] | N
     if len(tier_names) != workers or any(t not in TIERS for t in tier_names):
         raise ValueError("Provide exactly one valid size tier for each worker.")
     config = store.config()
-    models = models or {}
+    models = models or config.get("models", {})
+    if config["limits"].get("max_cost_usd") is not None:
+        prices = config["limits"]["prices"]
+        if any(not models.get(size) or models[size] not in prices for size in TIERS):
+            raise ValueError("A cost budget requires priced model IDs for every task tier.")
     backend_factory = backend_factory or (lambda model: CodexBackend(model=model))
     async def worker(index):
         name = f"worker-{uuid.uuid4().hex[:12]}-{index}"
         while True:
             task = store.claim(name, TIERS[tier_names[index]], lease_seconds,
-                               config["limits"]["max_attempts"])
+                               config["limits"]["max_attempts"], models=models)
             if task:
                 size = next(k for k, v in TIERS.items() if v == task["tier"])
                 await execute(store, task, config, models.get(size), backend_factory, lease_seconds)

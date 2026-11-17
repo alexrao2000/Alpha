@@ -145,6 +145,51 @@ effects: the external system must enforce that key, or an operator must
 reconcile uncertain outcomes. The initial command and policy are stored in
 the run database and reused on resume.
 
+## Optional dependency safety and budgets
+
+The executable scheduler enforces configured limits transactionally as work is
+created or dependencies are linked. Spawn depth, direct children, total tasks,
+delegation rounds, and attempts retain their existing defaults. The following
+additional controls are disabled unless explicitly requested:
+
+- `--max-descendants N`: cap the number of descendants below **each ancestor**
+  (across all generations, not only direct children).
+- `--max-dependency-depth N`: cap the longest dependency path, including
+  implicit parent-to-child waits. Dependency cycles are always rejected.
+- `--allow-dependency-links`: permit operator-created links between existing
+  tasks. Run `alpha orch depends TASK_ID --prerequisite OTHER_ID --db runs/job.sqlite`
+  for queued or waiting tasks. Disabled by default.
+- `--max-calls N`: count all admitted attempts, including retries.
+- `--max-tokens N`: use reported input and output tokens.
+- `--max-cost-usd USD --prices prices.json`: use reported tokens and your own
+  per-million-token model prices.
+
+Example `prices.json` (replace with real rates for the selected models):
+
+```json
+{
+  "your-model": {"input": 1.0, "cached_input": 0.5, "output": 3.0}
+}
+```
+
+For a USD cap, name a priced model for all task tiers using `--model` or the
+three `--model-small`, `--model-medium`, and `--model-large` flags.
+The configuration and prices are retained in the run DB across resumes.
+
+Budget admission happens **before** a new task attempt is claimed. Already
+running requests can exceed a token or USD ceiling, so these ceilings are
+based on observed usage, not guarantees against additional provider charges.
+Unknown usage pauses subsequent admissions under token/USD caps.
+
+Codex reports token usage. External command adapters may provide an additional
+`usage` response field with nonnegative `input_tokens`, `output_tokens`,
+and optional `cached_input_tokens`. Adapters without usage reporting can use
+`--max-calls`, but their first unknown usage will pause token/cost budgets.
+
+View accumulated calls, tokens, estimated USD, and unknown attempts in
+`alpha orch status --db runs/job.sqlite`. Budget-blocked tasks do not
+silently restart on resume.
+
 ## Boundaries
 
 - **Real:** Codex calls, multiple worker loops, SQLite state, worker slot
@@ -155,8 +200,7 @@ the run database and reused on resume.
   for human reconciliation instead of silently replayed.
 - **Not implemented:** connecting this scheduler to the existing experiment
   optimizer; remote multi-host infrastructure; an enforced external
-  idempotency protocol; human approvals; cost budgets; process-level
-  exactly-once execution.
+  idempotency protocol; human approvals; process-level exactly-once execution.
 - The existing `alpha orch demo` is **only** a scripted failure-mode example,
   not the implementation behind `alpha orch run`.
 

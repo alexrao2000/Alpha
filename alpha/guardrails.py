@@ -8,7 +8,7 @@ from __future__ import annotations
 import math
 import sqlite3
 import time
-from collections import defaultdict
+from collections import defaultdict, deque
 
 from .accounting import validate_prices
 
@@ -43,30 +43,39 @@ def validate_limits(limits: dict) -> None:
 
 
 def graph_depth(conn: sqlite3.Connection, extra_edges=()) -> int:
-    """Compute the longest dependency path, rejecting all cycles."""
+    """Compute longest dependency chain iteratively and reject cycles."""
     graph = defaultdict(set)
-    for task_id, parent in conn.execute("SELECT id,parent_id FROM tasks"):
+    for task_id, _ in conn.execute("SELECT id,parent_id FROM tasks"):
         graph[task_id]
-        if parent:
-            graph[parent].add(task_id)
-    for source, target in conn.execute("SELECT task_id,depends_on_id FROM task_dependencies"):
-        graph[source].add(target)
-    for source, target in extra_edges:
+    def add(source, target):
         if source not in graph or target not in graph:
             raise ValueError("Dependency references an unknown task.")
         graph[source].add(target)
-    active, longest = set(), {}
-
-    def visit(task_id):
-        if task_id in active:
-            raise ValueError("Dependency cycle detected.")
-        if task_id not in longest:
-            active.add(task_id)
-            longest[task_id] = max((1 + visit(other) for other in graph[task_id]), default=0)
-            active.remove(task_id)
-        return longest[task_id]
-
-    return max((visit(task_id) for task_id in graph), default=0)
+    for task_id, parent in conn.execute("SELECT id,parent_id FROM tasks"):
+        if parent:
+            add(parent, task_id)
+    for source, target in conn.execute("SELECT task_id,depends_on_id FROM task_dependencies"):
+        add(source, target)
+    for source, target in extra_edges:
+        add(source, target)
+    indegree = {task_id: 0 for task_id in graph}
+    for targets in graph.values():
+        for target in targets:
+            indegree[target] += 1
+    pending = deque(task_id for task_id, degree in indegree.items() if degree == 0)
+    longest = {task_id: 0 for task_id in graph}
+    visited = 0
+    while pending:
+        task_id = pending.popleft()
+        visited += 1
+        for target in graph[task_id]:
+            longest[target] = max(longest[target], longest[task_id] + 1)
+            indegree[target] -= 1
+            if indegree[target] == 0:
+                pending.append(target)
+    if visited != len(graph):
+        raise ValueError("Dependency cycle detected.")
+    return max(longest.values(), default=0)
 
 
 def check_graph(conn: sqlite3.Connection, limit: int | None, extra_edges=()) -> None:
@@ -75,14 +84,34 @@ def check_graph(conn: sqlite3.Connection, limit: int | None, extra_edges=()) -> 
         raise ValueError(f"Maximum dependency depth exceeded: {depth} > {limit}.")
 
 
+def check_descendant_budget(conn: sqlite3.Connection, parent_id: str,
+                            new_children: int, limit: int | None) -> None:
+    """Limit descendants of every ancestor, not just the direct parent."""
+    if limit is None:
+        return
+    ancestor = parent_id
+    while ancestor:
+        count = conn.execute("""WITH RECURSIVE descendants(id) AS (
+            SELECT id FROM tasks WHERE parent_id=?
+            UNION ALL
+            SELECT t.id FROM tasks t JOIN descendants d ON t.parent_id=d.id
+        ) SELECT count(*) FROM descendants""", (ancestor,)).fetchone()[0]
+        if count + new_children > limit:
+            raise ValueError(f"Maximum descendants exceeded for {ancestor}.")
+        row = conn.execute("SELECT parent_id FROM tasks WHERE id=?", (ancestor,)).fetchone()
+        ancestor = row[0] if row else None
+
+
 def block_failed_dependencies(conn: sqlite3.Connection, now: float) -> None:
     """Propagate failed prerequisites to every queued/waiting dependent."""
     while True:
         changed = conn.execute("""UPDATE tasks SET state='blocked',
             error='Dependency failed or requires operator review',updated=?
-            WHERE state IN ('queued','waiting') AND EXISTS (
-              SELECT 1 FROM task_dependencies d JOIN tasks prereq ON prereq.id=d.depends_on_id
-              WHERE d.task_id=tasks.id AND prereq.state IN ('failed','blocked','needs_review'))""",
+            WHERE state IN ('queued','waiting') AND (
+              EXISTS (SELECT 1 FROM task_dependencies d JOIN tasks p ON p.id=d.depends_on_id
+                      WHERE d.task_id=tasks.id AND p.state IN ('failed','blocked','needs_review'))
+              OR EXISTS (SELECT 1 FROM tasks child WHERE child.parent_id=tasks.id
+                         AND child.state IN ('failed','blocked','needs_review')))""",
             (now,)).rowcount
         if not changed:
             break
@@ -146,3 +175,21 @@ def report_usage(conn: sqlite3.Connection, token: str, usage: dict | None,
         (model, usage["input_tokens"], cache, usage["output_tokens"], cost, token)).rowcount
     if not updated:
         raise ValueError("Attempt usage already recorded or unknown lease token.")
+
+
+def reopen_reconciled_dependencies(conn: sqlite3.Connection, now: float) -> None:
+    """Reopen work blocked solely by dependencies that are now recoverable."""
+    reason = "Dependency failed or requires operator review"
+    while True:
+        changed = conn.execute("""UPDATE tasks SET
+            state=CASE WHEN EXISTS (SELECT 1 FROM tasks child WHERE child.parent_id=tasks.id
+                                    AND child.state!='done') THEN 'waiting' ELSE 'queued' END,
+            error=NULL,updated=?
+            WHERE state='blocked' AND error=?
+              AND NOT EXISTS (SELECT 1 FROM task_dependencies d JOIN tasks p ON p.id=d.depends_on_id
+                              WHERE d.task_id=tasks.id AND p.state IN ('failed','blocked','needs_review'))
+              AND NOT EXISTS (SELECT 1 FROM tasks child WHERE child.parent_id=tasks.id
+                              AND child.state IN ('failed','blocked','needs_review'))""",
+            (now, reason)).rowcount
+        if not changed:
+            break

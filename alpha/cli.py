@@ -32,7 +32,7 @@ def parser() -> argparse.ArgumentParser:
     commands.add_parser('adapters', help='List bundled fleets and the user adapter entry point')
     commands.add_parser('rubrics', help='List bundled and operator-defined grading rubric names')
     orch = commands.add_parser('orch', help='Run live agent tasks with durable worker scheduling (or demo)')
-    orch.add_argument('mode', choices=('demo', 'run', 'resume', 'status', 'resolve'))
+    orch.add_argument('mode', choices=('demo', 'run', 'resume', 'status', 'resolve', 'depends'))
     orch.add_argument('task', nargs='?', help='Task prompt for run, or task ID for resolve')
     orch.add_argument('--scenario', choices=('all', 'starvation', 'cycles', 'routing', 'side-effects', 'skills', 'limits'),
                       default='all', help='Which orchestration failure mode to demonstrate')
@@ -40,7 +40,7 @@ def parser() -> argparse.ArgumentParser:
     orch.add_argument('--verbose', action='store_true', help='Print task details or demo events')
     orch.add_argument('--db', type=Path, help='SQLite state path (required for resume/status)')
     orch.add_argument('--agents', type=Path, help='Identity JSON with per-agent instructions and skill paths')
-    orch.add_argument('--command', help='External agent command reading JSON on stdin and writing JSON on stdout')
+    orch.add_argument('--command', dest='agent_command', help='External agent command reading JSON on stdin and writing JSON on stdout')
     orch.add_argument('--read-only-command', action='store_true',
                       help='Assert that the external command cannot have side effects; enables safe retries')
     orch.add_argument('--decision', choices=('done', 'failed', 'retry'), help='Resolution for a needs_review task')
@@ -58,6 +58,14 @@ def parser() -> argparse.ArgumentParser:
     orch.add_argument('--max-tasks', type=int, default=40)
     orch.add_argument('--max-rounds', type=int, default=2)
     orch.add_argument('--max-attempts', type=int, default=2)
+    orch.add_argument('--max-descendants', type=int, help='Optional maximum descendants of any task')
+    orch.add_argument('--max-dependency-depth', type=int, help='Optional longest dependency chain')
+    orch.add_argument('--allow-dependency-links', action='store_true', help='Allow operator-created cross-task prerequisites')
+    orch.add_argument('--prerequisite', help='Prerequisite task ID for orch depends')
+    orch.add_argument('--max-calls', type=int, help='Optional maximum model/command attempts')
+    orch.add_argument('--max-tokens', type=int, help='Optional reported token budget')
+    orch.add_argument('--max-cost-usd', type=float, help='Optional estimated USD budget')
+    orch.add_argument('--prices', type=Path, help='JSON model pricing table (USD per million tokens)')
     run = commands.add_parser('experiment')
     run.add_argument('--backend', choices=('fixture', 'codex'))
     run.add_argument('--fleet', help='support, crewai-game-builder, swarm-handoff, or crewai-self-review')
@@ -379,11 +387,22 @@ def main(argv=None) -> int:
                 identity = args.identity or ('general' if 'general' in identities else next(iter(identities)))
                 limits = dict(max_depth=args.max_depth, max_children=args.max_children,
                               max_tasks=args.max_tasks, max_rounds=args.max_rounds,
-                              max_attempts=args.max_attempts)
-                if any(not isinstance(x, int) or x < 1 for x in limits.values()):
-                    raise ValueError('Delegation and retry limits must be positive integers.')
+                              max_attempts=args.max_attempts,
+                              max_descendants=args.max_descendants,
+                              max_dependency_depth=args.max_dependency_depth,
+                              allow_dependency_links=args.allow_dependency_links,
+                              max_calls=args.max_calls, max_tokens=args.max_tokens,
+                              max_cost_usd=args.max_cost_usd,
+                              prices=json.loads(args.prices.read_text()) if args.prices else None)
+                model_routes = {size: getattr(args, 'model_' + size) or args.model
+                                for size in ('small', 'medium', 'large')}
                 store.start(args.task, identity, identities, limits,
-                            command=args.command, read_only_command=args.read_only_command)
+                            command=args.agent_command, read_only_command=args.read_only_command,
+                            models=model_routes)
+            if args.mode == 'depends':
+                if not args.task or not args.prerequisite:
+                    raise ValueError('Depends requires a task ID and --prerequisite TASK_ID.')
+                store.add_dependency(args.task, args.prerequisite)
             if args.mode == 'resolve':
                 if not args.task or not args.decision:
                     raise ValueError('Resolve requires a task ID and --decision done|failed|retry.')
@@ -393,11 +412,13 @@ def main(argv=None) -> int:
                 models = {size: (getattr(args, 'model_' + size) or args.model)
                           for size in ('small', 'medium', 'large')}
                 result = asyncio.run(run_workers(store, workers=args.workers, tiers=tiers,
-                                                 models=models, lease_seconds=args.lease))
+                                                 models=models if any(models.values()) else None,
+                                                 lease_seconds=args.lease))
             else:
                 result = store.status()
             root = next(t for t in result['tasks'] if t['id'] == result['root'])
             summary = dict(database=str(db), root=result['root'], state=root['state'],
+                           budget=result.get('budget'),
                            result=json.loads(root['result']) if root['result'] else None,
                            error=root['error'], counts=result['counts'])
             if args.verbose:
