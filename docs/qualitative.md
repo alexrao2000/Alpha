@@ -27,30 +27,30 @@ model judge. Agreement on this dataset does not establish general reliability.
 
 ### Human review → model judge → calibration
 
-\`\`\`sh
+```sh
 alpha q human
 # Open human-review.html in the run directory, rate the outputs,
 # then download human-review-completed.json from the page.
 
 alpha q judge --max-judgments 8
 alpha q calibrate --human /path/to/human-review-completed.json
-\`\`\`
+```
 
-\`alpha q human\` generates both a JSON template and a standalone
-\`human-review.html\` with individual 1–5 ratings and visually blinded
+`alpha q human` generates both a JSON template and a standalone
+`human-review.html` with individual 1–5 ratings and visually blinded
 A/B choices. All inputs and choices stay in your browser until you export JSON.
 The source file contains the A/B mapping so that preferences can be reconciled,
 so this is display-level blinding, not a security guarantee.
 
-The calibration shortcut loads the saved \`qualitative.json\` produced by
-\`q judge\`, uses the exported human answers, and produces
-\`calibration.json\` plus \`calibration-report.html\`. No extra model calls
-occur. It does not overwrite \`qualitative.json\`. To read an earlier judge
-file, use \`--judge-results PATH\`; to choose an older experiment, pass its
+The calibration shortcut loads the saved `qualitative.json` produced by
+`q judge`, uses the exported human answers, and produces
+`calibration.json` plus `calibration-report.html`. No extra model calls
+occur. It does not overwrite `qualitative.json`. To read an earlier judge
+file, use `--judge-results PATH`; to choose an older experiment, pass its
 directory. Mismatched experiment IDs, unknown run IDs, duplicates, and empty
 review files are rejected.
 
-If you only want the matrix, \`alpha q judge\` or \`alpha q human\` still works.
+If you only want the matrix, `alpha q judge` or `alpha q human` still works.
 Without matched human/model judgments the calibration fields are unavailable,
 and the report makes that limitation explicit.
 
