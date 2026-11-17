@@ -2,6 +2,27 @@
 
 Alpha's objective checks and candidate selection remain unchanged. These are post-hoc demonstrations, not additional quality gates. They never change the frozen candidate, validated status, regression bounds, original token accounting, or proposal.patch. All modes are off by default.
 
+## Short commands
+
+Install the local CLI once from the Alpha checkout:
+
+    python3 -m pip install -e .
+
+Then run these from the repository root. The latest saved experiment under ./runs is selected automatically:
+
+    alpha q demo                              # Synthetic feedback, follow-ups, turn count
+    alpha q judge                             # LLM scores plus blind pairwise comparison
+    alpha q pair                              # Pairwise comparison only
+    alpha q human                             # Create human review template
+    alpha q turns --interactions messages.json # Count recorded turns, follow-ups, corrections
+    alpha q all                               # All demonstrations (model calls included)
+
+Choose an older experiment by passing its directory or experiment.json:
+
+    alpha q judge runs/MY-EXPERIMENT --max-judgments 4
+
+Pass --out DIR to keep outputs from different modes separate. Otherwise each mode replaces the prior qualitative report in the run directory. For LLM modes, --judge-model MODEL pins the judge; --max-judgments caps additional model calls. The original long form (`alpha qualitative ...`) still works and allows individually selected features.
+
 Run an experiment normally first to produce experiment.json. Then use these commands (substitute your run folder):
 
     python3 -m alpha qualitative runs/EXAMPLE/experiment.json --simulate-feedback
