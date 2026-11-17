@@ -108,7 +108,7 @@ document.querySelector('#download').addEventListener('click',()=>{
       (choice==='A')===aIsBaseline?'baseline':'candidate';
     entry.notes=document.querySelector('[data-pair-notes="'+i+'"]').value;
   });
-  const blob=new Blob([JSON.stringify(review,null,2)+'\n'],{type:'application/json'});
+  const blob=new Blob([JSON.stringify(review,null,2)+'\\n'],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const anchor=document.createElement('a');anchor.href=url;
   anchor.download='human-review-completed.json';anchor.click();
