@@ -115,6 +115,19 @@ class QualitativeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(stub.compared), 1)
         self.assertEqual(report["selected"], "candidate")
 
+    async def test_large_holdout_leaves_budget_for_pairwise(self):
+        report = make_report()
+        report["runs"] = [
+            make_run(variant, True, case=f"case-{i}")
+            for i in range(10) for variant in ("baseline", "candidate")
+        ]
+        judge = JudgeStub()
+        result = await evaluate(report, judge=judge, score=True, pairwise=True,
+                                max_judgments=6)
+        self.assertEqual(len(judge.scored), 3)
+        self.assertEqual(len(judge.compared), 3)
+        self.assertEqual(result["model_judgment_calls"], 6)
+
     async def test_judge_cap_does_not_add_hidden_calls(self):
         judge = JudgeStub()
         result = await evaluate(make_report(), judge=judge,

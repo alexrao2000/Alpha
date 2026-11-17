@@ -282,6 +282,11 @@ async def evaluate(
     graded = []
     comparisons = []
     total = 0
+    pairs = paired_holdout(report, candidate) if pairwise else []
+    # Keep room for some blind comparisons when both methods are requested.
+    # Otherwise a large holdout exhausts the entire budget on individual scores.
+    reserved_pairs = min(max_judgments // 2, len(pairs)) if score and pairwise else 0
+    score_budget = max_judgments - reserved_pairs
     if score or pairwise:
         if judge is None:
             raise ValueError("A judge is required for model-based evaluation.")
@@ -289,7 +294,7 @@ async def evaluate(
             methods.append("llm_judge")
             for run in sorted((r for r in report["runs"] if r["split"] == "holdout"),
                               key=run_key):
-                if total >= max_judgments:
+                if total >= score_budget:
                     break
                 response = await judge.score(run)
                 if (type(response.get("score")) is not int
@@ -301,7 +306,7 @@ async def evaluate(
                 total += 1
         if pairwise:
             methods.append("pairwise_judge")
-            for base, changed in paired_holdout(report, candidate):
+            for base, changed in pairs:
                 if total >= max_judgments:
                     break
                 seed = sha256((run_key(base) + run_key(changed)).encode()).digest()[0]
