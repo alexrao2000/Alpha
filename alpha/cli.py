@@ -187,6 +187,13 @@ async def run(args) -> int:
             template = human_review_template(report, args.candidate)
             (out / 'human-review-template.json').write_text(
                 json.dumps(template, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+            if not any((args.simulate_feedback, args.turn_count, args.feedback,
+                        args.llm_judge, args.pairwise, args.human)):
+                # A blank questionnaire is not an evaluation. Do not overwrite
+                # previously saved LLM judgments needed for calibration.
+                print(json.dumps({'human_template': str(out / 'human-review-template.json'),
+                                  'model_judgment_calls': 0}, indent=2))
+                return 0
         interactions = json.loads(args.interactions.read_text(encoding='utf-8')) if args.interactions else None
         human = json.loads(args.human.read_text(encoding='utf-8')) if args.human else None
         judge = CodexJudge(args.judge_model) if args.llm_judge or args.pairwise else None
