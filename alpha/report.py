@@ -84,6 +84,24 @@ def judgment_analysis_html(data: JSON) -> str:
         + " matched comparisons; exact agreement " + exact_pair
         + " (a tie is a separate outcome).</p>"
     )
+    if pair.get("matched", 0):
+        confusion = pair["confusion"]
+        table_rows = []
+        for human_choice in ("baseline", "candidate", "tie"):
+            table_rows.append(
+                "<tr><th>" + esc(human_choice) + "</th>"
+                + "".join(
+                    "<td>" + esc(confusion[human_choice][model_choice]) + "</td>"
+                    for model_choice in ("baseline", "candidate", "tie")
+                ) + "</tr>"
+            )
+        result += (
+            "<h4>A/B agreement by choice (rows: human, columns: LLM)</h4>"
+            '<div class="table-wrap"><table>'
+            "<thead><tr><th>HUMAN \\ LLM</th><th>BASELINE</th>"
+            "<th>CANDIDATE</th><th>TIE</th></tr></thead><tbody>"
+            + "".join(table_rows) + "</tbody></table></div>"
+        )
     disagreements = []
     for row in rating.get("disagreements", [])[:8]:
         disagreements.append(
