@@ -21,6 +21,7 @@ from .transformations import expanded_variants, validate_variants
 from .qualitative import CodexJudge, evaluate, human_review_template, calibrate_saved
 from .human_review import render_human_review
 from .rubrics import load_rubric, available_rubrics
+from .orchestration import demo as orchestration_demo
 
 
 def parser() -> argparse.ArgumentParser:
@@ -29,6 +30,12 @@ def parser() -> argparse.ArgumentParser:
     commands.add_parser('help')
     commands.add_parser('adapters', help='List bundled fleets and the user adapter entry point')
     commands.add_parser('rubrics', help='List bundled and operator-defined grading rubric names')
+    orch = commands.add_parser('orch', help='Deterministic subagent scheduling and safety demonstrations')
+    orch.add_argument('mode', choices=('demo',))
+    orch.add_argument('--scenario', choices=('all', 'starvation', 'cycles', 'routing', 'side-effects', 'skills', 'limits'),
+                      default='all', help='Which orchestration failure mode to demonstrate')
+    orch.add_argument('--out', type=Path, help='Write the full JSON trace to this path')
+    orch.add_argument('--verbose', action='store_true', help='Print all state-transition events')
     run = commands.add_parser('experiment')
     run.add_argument('--backend', choices=('fixture', 'codex'))
     run.add_argument('--fleet', help='support, crewai-game-builder, swarm-handoff, or crewai-self-review')
@@ -325,6 +332,21 @@ def main(argv=None) -> int:
         return 0
     if args.command == 'adapters':
         print('support (scripted or live), crewai-game-builder, swarm-handoff, crewai-self-review\nUser fleets: experiment --adapter path/to/adapter.json')
+        return 0
+    if args.command == 'orch':
+        result = orchestration_demo(args.scenario)
+        if args.out:
+            args.out.parent.mkdir(parents=True, exist_ok=True)
+            args.out.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
+        if not args.verbose:
+            result = {
+                **result,
+                'results': {
+                    name: {k: v for k, v in scenario.items() if k != 'events'}
+                    for name, scenario in result['results'].items()
+                },
+            }
+        print(json.dumps(result, indent=2))
         return 0
     if args.command == 'rubrics':
         for entry in available_rubrics():
