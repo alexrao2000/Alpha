@@ -356,6 +356,8 @@ def calibrate_saved(report: dict, recorded: dict, human: dict) -> dict:
         raise ValueError("Saved qualitative file lacks model judgment lists.")
     scores = recorded["llm_scores"]
     pairs = recorded["pairwise"]
+    if not scores and not pairs:
+        raise ValueError("Saved qualitative file has no LLM judgments; run alpha q judge first.")
     valid_runs = {run_key(r) for r in report["runs"] if r["split"] == "holdout"}
     valid_pairs = {(run_key(a), run_key(b)) for a, b in paired_holdout(report, candidate)}
     seen_scores, seen_pairs = set(), set()
@@ -376,6 +378,8 @@ def calibrate_saved(report: dict, recorded: dict, human: dict) -> dict:
             raise ValueError("Invalid or duplicate saved model preference.")
         seen_pairs.add(key)
     human_results = _human_reviews(report, human, candidate)
+    if not human_results["scores"] and not human_results["pairs"]:
+        raise ValueError("Human review is empty; fill in at least one 1–5 score or A/B preference.")
     result = {
         **recorded,
         "human": human_results,
