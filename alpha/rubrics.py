@@ -11,6 +11,8 @@ from hashlib import sha256
 import json
 from pathlib import Path
 
+from .contracts import ROOT
+
 
 DEFAULT_RUBRIC = {
     "id": "general-output-quality",
@@ -102,13 +104,104 @@ def validate_rubric(value: dict) -> dict:
     return deepcopy(value)
 
 
-def load_rubric(path: Path | None = None) -> dict:
-    if path is None:
-        return validate_rubric(DEFAULT_RUBRIC)
+# Named rubrics are discovered from ./rubrics and the bundled examples.
+# Operators can either name a JSON file, use the rubric's declared ID, or
+# supply an explicit path. Avoid silently picking one of ambiguous matches.
+_DEFAULT_NAMES = frozenset(("default", "general", "general-output-quality"))
+_NAME_ALIASES = {"writing": "writing-quality"}
+
+
+def _rubric_directories() -> list[Path]:
+    directories = (
+        Path.cwd() / "rubrics",
+        ROOT / "rubrics",
+        ROOT / "examples" / "rubrics",
+    )
+    found = []
+    seen = set()
+    for directory in directories:
+        canonical = directory.resolve()
+        if canonical not in seen and canonical.is_dir():
+            seen.add(canonical)
+            found.append(canonical)
+    return found
+
+
+def _read_rubric_file(path: Path) -> dict:
     # Prevent accidentally embedding a very large document in a model prompt.
     if path.stat().st_size > 30_000:
         raise ValueError("Rubric JSON must not exceed 30 KB.")
     return validate_rubric(json.loads(path.read_text(encoding="utf-8")))
+
+
+def available_rubrics() -> list[dict]:
+    """List usable rubrics found in the operator's and bundled directories."""
+    entries = [{
+        "name": "default", "id": DEFAULT_RUBRIC["id"],
+        "path": None, "aliases": ["general", "general-output-quality"],
+    }]
+    for folder in _rubric_directories():
+        for path in sorted(folder.glob("*.json")):
+            try:
+                rubric = _read_rubric_file(path)
+            except (OSError, ValueError, TypeError):
+                # Invalid custom files cannot be used, but must not prevent
+                # selecting other valid rubrics. Explicit paths fail loudly.
+                continue
+            aliases = [name for name, target in _NAME_ALIASES.items()
+                       if target == path.stem or target == rubric["id"]]
+            entries.append({
+                "name": path.stem, "id": rubric["id"],
+                "path": str(path), "aliases": aliases,
+            })
+    return entries
+
+
+def resolve_rubric(value: str | Path | None) -> Path | None:
+    """Resolve a short rubric name, declared ID, or explicit JSON file path."""
+    if value is None:
+        return None
+    name = str(value)
+    if not name.strip():
+        raise ValueError("Rubric name cannot be empty.")
+    if name in _DEFAULT_NAMES:
+        return None
+    direct = Path(name).expanduser()
+    # A path (with directory, extension, absolute prefix or existing file)
+    # must be respected exactly; never silently fall back to a different file.
+    looks_like_path = (
+        direct.is_file() or direct.is_absolute() or
+        "/" in name or "\\" in name or name.endswith(".json")
+    )
+    if looks_like_path:
+        if not direct.is_file():
+            raise ValueError(f"Rubric file does not exist: {direct}")
+        return direct
+    alias = _NAME_ALIASES.get(name, name)
+    matches = {}
+    for entry in available_rubrics()[1:]:
+        if alias in (entry["name"], entry["id"]):
+            path = Path(entry["path"])
+            matches[str(path.resolve())] = path
+    if len(matches) > 1:
+        locations = ", ".join(sorted(matches))
+        raise ValueError(
+            f"Ambiguous rubric name {name!r}: {locations}. Use an explicit path."
+        )
+    if not matches:
+        raise ValueError(
+            f"Unknown rubric {name!r}. Run 'alpha rubrics' to list names, "
+            "save your custom JSON under ./rubrics/<name>.json, "
+            "or provide an explicit file path."
+        )
+    return next(iter(matches.values()))
+
+
+def load_rubric(path: Path | str | None = None) -> dict:
+    resolved = resolve_rubric(path)
+    if resolved is None:
+        return validate_rubric(DEFAULT_RUBRIC)
+    return _read_rubric_file(resolved)
 
 
 def rubric_record(value: dict) -> dict:
