@@ -52,13 +52,16 @@ Alpha separates **who evaluates** from **how they evaluate**, giving a 2 × 2 ma
 
 **Shared grading guidelines.** Both reviewers should grade against the *same written rubric*, not simply decide whether a response feels good. Alpha's default defines five criteria: **relevance, completeness, clarity, instruction following, and helpfulness**. It explains what each rating from 1 (poor) to 5 (excellent) means, and instructs A/B reviewers to compare using those criteria, favor meaningful quality differences over verbosity, and allow ties. The human review page shows the instructions; the LLM judge receives the same definitions in its prompt.
 
-You can use an alternative, task-specific rubric via `--rubric`, for example [the writing-quality rubric](examples/rubrics/writing-quality.json). Keep the rubric **identical** for human and LLM review:
+Select a task-specific rubric by **short name** with `-r` (or `--rubric`). The bundled [writing rubric](examples/rubrics/writing-quality.json) is simply `writing`. Keep the rubric **identical** for human and LLM review:
 
 ```sh
-alpha q human --rubric examples/rubrics/writing-quality.json
-alpha q judge --rubric examples/rubrics/writing-quality.json
+alpha rubrics                 # List available rubric names
+alpha q human -r writing
+alpha q judge -r writing
 alpha q calibrate --human /path/to/human-review-completed.json
 ```
+
+For an operator-defined rubric, save a valid JSON rubric to `rubrics/my-review.json` and use `-r my-review` (or the rubric's declared ID). An explicit path is still accepted, such as `-r ./rubrics/my-review.json` or `--rubric /absolute/path/to/review.json`. If names collide, Alpha asks for the full path instead of choosing for you.
 
 Each result records the rubric's content and fingerprint; calibration refuses mismatched or missing identities rather than reporting misleading agreement. Rubrics remain optional and do not change Alpha's objective tests.
 
