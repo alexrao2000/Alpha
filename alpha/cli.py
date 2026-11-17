@@ -20,7 +20,7 @@ from .report import render_report
 from .transformations import expanded_variants, validate_variants
 from .qualitative import CodexJudge, evaluate, human_review_template, calibrate_saved
 from .human_review import render_human_review
-from .rubrics import load_rubric
+from .rubrics import load_rubric, available_rubrics
 
 
 def parser() -> argparse.ArgumentParser:
@@ -28,6 +28,7 @@ def parser() -> argparse.ArgumentParser:
     commands = result.add_subparsers(dest='command')
     commands.add_parser('help')
     commands.add_parser('adapters', help='List bundled fleets and the user adapter entry point')
+    commands.add_parser('rubrics', help='List bundled and operator-defined grading rubric names')
     run = commands.add_parser('experiment')
     run.add_argument('--backend', choices=('fixture', 'codex'))
     run.add_argument('--fleet', help='support, crewai-game-builder, swarm-handoff, or crewai-self-review')
@@ -68,7 +69,7 @@ def parser() -> argparse.ArgumentParser:
     qualitative.add_argument('--llm-judge', action='store_true', help='Ask a model to score individual holdout outputs')
     qualitative.add_argument('--pairwise', action='store_true', help='Blindly compare candidate and baseline holdout outputs')
     qualitative.add_argument('--judge-model', help='Explicit Codex model; without it uses CLI default')
-    qualitative.add_argument('--rubric', type=Path, help='Optional JSON grading rubric shared by human and LLM reviewers')
+    qualitative.add_argument('-r', '--rubric', help='Rubric name (e.g. writing), ID, or JSON file path')
     qualitative.add_argument('--max-judgments', type=int, default=12, help='Maximum additional model calls, shared between judge methods')
     quick = commands.add_parser('q', help='Shortcuts for optional evaluations of the latest saved run')
     quick.add_argument('mode', choices=('demo', 'judge', 'pair', 'human', 'turns', 'all', 'calibrate'),
@@ -80,7 +81,7 @@ def parser() -> argparse.ArgumentParser:
     quick.add_argument('--human', type=Path, help='Completed human-review JSON for human or all')
     quick.add_argument('--judge-results', type=Path, help='Previously saved qualitative.json containing LLM judgments (calibrate only)')
     quick.add_argument('--judge-model', help='Codex judge model; defaults to the current CLI model')
-    quick.add_argument('--rubric', type=Path, help='Optional JSON grading rubric for human and model review')
+    quick.add_argument('-r', '--rubric', help='Rubric name (e.g. writing), ID, or JSON file path')
     quick.add_argument('--max-judgments', type=int, default=12, help='Cap on additional LLM judging calls')
     return result
 
@@ -324,6 +325,13 @@ def main(argv=None) -> int:
         return 0
     if args.command == 'adapters':
         print('support (scripted or live), crewai-game-builder, swarm-handoff, crewai-self-review\nUser fleets: experiment --adapter path/to/adapter.json')
+        return 0
+    if args.command == 'rubrics':
+        for entry in available_rubrics():
+            aliases = ', '.join(entry['aliases'])
+            display = entry['name'] + (f' ({aliases})' if aliases else '')
+            location = entry['path'] or 'built-in'
+            print(f'{display}  ·  {entry["id"]}  ·  {location}')
         return 0
     try:
         args = expand_quick_command(args)
