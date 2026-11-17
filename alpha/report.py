@@ -58,8 +58,30 @@ def judgment_analysis_html(data: JSON) -> str:
             "<tr><th>" + esc("Human" if evaluator == "human" else "LLM")
             + "</th><td>" + stars + "</td><td>" + ab + "</td></tr>"
         )
+    rubric = data.get("rubric")
+    rubric_html = ""
+    if isinstance(rubric, dict) and isinstance(rubric.get("definition"), dict):
+        definition = rubric["definition"]
+        criteria = "".join(
+            "<li><b>" + esc(item["label"]) + ":</b> "
+            + esc(item["description"]) + "</li>"
+            for item in definition.get("criteria", [])
+        )
+        anchors = "".join(
+            "<li>" + esc(key) + ": " + esc(value) + "</li>"
+            for key, value in sorted(definition.get("anchors", {}).items())
+        )
+        rubric_html = (
+            "<details><summary>Shared reviewer rubric · " + esc(definition.get("id"))
+            + " v" + esc(definition.get("version")) + "</summary>"
+            "<p>Both human and model judges use the same criteria:</p><ul>"
+            + criteria + "</ul><p>1–5 rating anchors:</p><ul>" + anchors + "</ul>"
+            "<p>A/B: " + esc(definition.get("pairwise", {}).get("instruction"))
+            + " " + esc(definition.get("pairwise", {}).get("tie_rule")) + "</p>"
+            "<p class='caption'>SHA-256: " + esc(rubric.get("sha256")) + "</p></details>"
+        )
     result = (
-        "<h3>How quality is judged: 2 × 2</h3>"
+        rubric_html + "<h3>How quality is judged: 2 × 2</h3>"
         '<div class="table-wrap"><table style="white-space:normal">'
         "<thead><tr><th>WHO JUDGES</th><th>1–5 STARS · ONE OUTPUT</th>"
         "<th>A/B · TWO OUTPUTS</th></tr></thead><tbody>"
