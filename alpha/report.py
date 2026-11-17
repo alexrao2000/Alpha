@@ -61,6 +61,9 @@ def qualitative_html(data: JSON | None) -> str:
         turn_rows = "<p>Interaction records: " + esc(summary.get("count", 0))
         for key, label in (
             ("mean_user_turns", "Mean user turns"),
+            ("mean_assistant_turns", "Mean assistant turns"),
+            ("mean_follow_up_turns", "Mean follow-up turns"),
+            ("abandonment_rate", "Abandonment rate"),
             ("follow_up_rate", "Follow-up rate"),
             ("correction_rate_per_follow_up", "Correction rate / follow-up"),
             ("mean_satisfaction", "Mean satisfaction / 5"),
