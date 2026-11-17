@@ -36,13 +36,24 @@ as unverified rather than assumed equivalent.
 You may customize instructions without changing the experiment engine:
 
 ```sh
-alpha q human --rubric examples/rubrics/writing-quality.json
-alpha q judge --rubric examples/rubrics/writing-quality.json
+alpha rubrics                            # List bundled and custom names
+alpha q human -r writing
+alpha q judge -r writing
 alpha q calibrate --human /path/to/human-review-completed.json
 ```
 
 The [writing rubric](../examples/rubrics/writing-quality.json) is an editable
-example for Alpha's writing/review workflow. To create your own, copy it and
+example for Alpha's writing/review workflow. The short alias `writing` resolves
+to that bundled rubric, even for an installed CLI. `alpha rubrics` lists the
+available names. `-r` and `--rubric` are interchangeable.
+
+To create an operator rubric, place a file such as `rubrics/my-review.json`
+under the working directory. Use `-r my-review` (filename without `.json`)
+or its JSON `id` (for example `-r expert-review`). Alternatively, give
+an explicit path, like `-r ./rubrics/my-review.json`. Names are searched in
+`./rubrics`, the Alpha project rubric folder, and the bundled examples.
+Ambiguous names must be resolved with an explicit path; invalid files are
+not available by name and are reported when loaded by path. To create your own, copy it and
 change the ID/version, purpose, criteria, 1–5 anchors, pairwise instructions,
 and tie rule. Keep all five anchors, unique criterion IDs, and the JSON fields
 shown in the example. **Use the same file for the human and LLM runs.** The

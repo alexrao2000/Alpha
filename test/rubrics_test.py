@@ -133,7 +133,7 @@ class RubricTests(unittest.TestCase):
             args = expand_quick_command(parser().parse_args([
                 "q", "judge", str(experiment), "--rubric", "custom.json"
             ]))
-            self.assertEqual(args.rubric, Path("custom.json"))
+            self.assertEqual(args.rubric, "custom.json")
 
 
 class JudgeRubricTests(unittest.IsolatedAsyncioTestCase):
