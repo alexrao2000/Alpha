@@ -386,6 +386,19 @@ def calibrate_saved(report: dict, recorded: dict, human: dict) -> dict:
     human_results = _human_reviews(report, human, candidate)
     if not human_results["scores"] and not human_results["pairs"]:
         raise ValueError("Human review is empty; fill in at least one 1–5 score or A/B preference.")
+    model_rubric, human_rubric = recorded.get("rubric"), human.get("rubric")
+    if (model_rubric is None) != (human_rubric is None):
+        raise ValueError(
+            "Human and LLM reviews must identify the same rubric. "
+            "Regenerate the older review with the current rubric."
+        )
+    rubric_warning = []
+    if model_rubric is None:
+        rubric_warning.append(
+            "Legacy ratings lack a documented shared rubric; apparent agreement is not calibrated under common instructions."
+        )
+    elif checked_record(model_rubric)["sha256"] != checked_record(human_rubric)["sha256"]:
+        raise ValueError("Human and LLM reviews used different grading rubrics; rerun with the same rubric.")
     result = {
         **recorded,
         "human": human_results,
@@ -393,6 +406,7 @@ def calibrate_saved(report: dict, recorded: dict, human: dict) -> dict:
         "notes": [
             "Calibration used saved model judgments and a separate human review.",
             "No additional model calls or original experiment changes.",
+            *rubric_warning,
         ],
         "new_model_judgment_calls": 0,
         "model_judgment_source": "saved",
