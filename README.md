@@ -12,7 +12,7 @@ The first fleet handles simulated customer support. Its five roles are **planner
 - **Tradeoffs:** frozen cheapest, fastest, and highest-quality choices, a validated frontier, cached tokens, failed attempts, and explicit price estimates.
 - **Long runs:** shared request, observed-token, and deadline budgets; durable checkpoints; explicit hash-checked resume.
 
-See the [experiment guide](docs/experiments.md) and [adapter protocol](docs/adapters.md). Try the expanded scripted search with `python3 -m alpha experiment --backend fixture --search expanded`. These tests remain scripted; they do not establish model savings.
+See the [experiment guide](docs/experiments.md) and [adapter protocol](docs/adapters.md). Try the expanded scripted search with `alpha experiment --backend fixture --search expanded`. These tests remain scripted; they do not establish model savings.
 
 ## Test an independently built fleet
 
@@ -129,7 +129,7 @@ separate simulator, not proof of real execution.
 The experiment engine, CLI, model transport, and HTML report renderer use Python 3.14 or newer with no third-party runtime dependencies. Run these commands from the repository checkout. Node.js 24 or newer is needed only for the optional eve agent-authoring runtime.
 
 ```sh
-python3 -m alpha experiment --backend fixture
+alpha experiment --backend fixture
 ```
 
 Open the generated `report.html` in the output directory. The report includes discovery comparisons, a frozen holdout candidate, a proposed configuration patch, and expandable per-role inputs, outputs, tool events, and final states. It works as a standalone file; no server is needed.
@@ -141,7 +141,7 @@ The checked-in demonstration is [examples/fixture/report.html](examples/fixture/
 Install the Codex CLI and sign in with your existing account. Alpha invokes the CLI through its documented `exec` command; it never reads or copies authentication files.
 
 ```sh
-python3 -m alpha experiment --backend codex --limit 2 --trials 1 \
+alpha experiment --backend codex --limit 2 --trials 1 \
   --variants without-planner,without-policy
 ```
 
@@ -149,7 +149,7 @@ python3 -m alpha experiment --backend codex --limit 2 --trials 1 \
 
 Each role is a separate model request with isolated context and structured JSON output. The backend uses an ephemeral, read-only temporary working directory and rejects a trial if the model attempts a shell, web, file-change, or MCP tool action. Only the local host executes the simulated order tools. Nothing connects to a real support or payment account.
 
-CLI options include `--model`, `--limit`, `--trials`, `--variants`, `--concurrency`, and `--out`. Use `python3 -m alpha experiment --help` for details. A full live experiment can make hundreds of requests. Begin with the small command above. Roles within a workflow run sequentially. Use `--concurrency 3` to evaluate independent workflows together; each still has its own state. Trial/variant order rotates to reduce a fixed ordering bias. This does not eliminate service-load or caching effects.
+CLI options include `--model`, `--limit`, `--trials`, `--variants`, `--concurrency`, and `--out`. Use `alpha experiment --help` for details. A full live experiment can make hundreds of requests. Begin with the small command above. Roles within a workflow run sequentially. Use `--concurrency 3` to evaluate independent workflows together; each still has its own state. Trial/variant order rotates to reduce a fixed ordering bias. This does not eliminate service-load or caching effects.
 
 Live reports record the usage events returned by the CLI. Input tokens include cached input, which is also reported separately. Optional supplied prices produce estimates that distinguish cached input, output, and chargeable tools. Billing dollars remain unknown. Latency includes process startup. Without `--model`, model identity is labeled as the CLI default rather than a verified provider identity.
 
@@ -190,7 +190,7 @@ The selected role list lives in [fleet.config.json](fleet.config.json). Proposed
 
 ```sh
 python3 -m unittest discover -s test -p '*_test.py' -v
-python3 -m alpha experiment --backend fixture
+alpha experiment --backend fixture
 git apply --check examples/fixture/proposal.patch
 ```
 
@@ -207,3 +207,18 @@ The checked-in measured runs predate the Python migration and retain their origi
 Alpha's own code and authored cases are MIT licensed. Dependency licenses remain their own.
 
 Current version-two reports add confidence bounds, frozen tradeoffs, and request accounting. Historical examples stay unchanged and do not acquire stronger statistical claims from the new implementation.
+
+## Recommended CLI workflow
+
+Install the project once with `python3 -m pip install -e .`, then use the `alpha` command to run all normal operations. Running internal Python modules or passing data files directly to a Python interpreter is not the supported user workflow.
+
+```sh
+alpha orch run "Analyze a design" --db runs/design.sqlite --workers 2
+alpha orch status --db runs/design.sqlite
+alpha orch resume --db runs/design.sqlite --workers 2
+alpha experiment --backend fixture
+```
+
+To run an operator-supplied external agent command in a restricted Docker container, use `alpha orch run --command "python -m agent" --sandbox-policy sandbox.json --db runs/isolated.sqlite`. The container image must already exist locally and be pinned by digest. See [sandboxing](docs/sandboxing.md). Host execution remains the default when no policy is specified. These containers are not a substitute for strong isolation of hostile code.
+
+Contributors should use the CLI for user-facing operations, add new flags when implementing new features, and edit repository files directly rather than distributing patch installers.

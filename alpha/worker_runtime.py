@@ -7,14 +7,14 @@ from __future__ import annotations
 
 import asyncio
 import json
-import shlex
+import shutil
 from pathlib import Path
 import sqlite3
 import time
 import uuid
 
 from .backends import CodexBackend
-from .processes import run_process
+from .sandbox import run_agent_command, validate_sandbox_policy
 from .orchestration import classify, TIERS
 from .guardrails import (ensure_tables, validate_limits, check_graph,
                          block_failed_dependencies, budget_snapshot,
@@ -96,10 +96,11 @@ class RunStore:
 
     def start(self, prompt: str, identity: str, identities: dict, limits: dict, *,
               command: str | None = None, read_only_command: bool = False,
-              models: dict | None = None) -> str:
+              models: dict | None = None, sandbox_policy: dict | None = None) -> str:
         if not prompt.strip() or identity not in identities:
             raise ValueError("Provide a task prompt and a defined agent identity.")
         validate_limits(limits)
+        sandbox = validate_sandbox_policy(sandbox_policy, has_command=command is not None)
         if limits.get("max_cost_usd") is not None:
             prices = limits["prices"]
             if any(not (models or {}).get(size) or (models or {})[size] not in prices for size in TIERS):
@@ -128,7 +129,7 @@ class RunStore:
             conn.execute("INSERT INTO settings VALUES (?,?)", (
                 "config", json.dumps({"root": root, "identities": identities, "limits": limits,
                                        "command": command, "read_only": command is None or read_only_command,
-                                       "models": models or {}})))
+                                       "models": models or {}, "sandbox": sandbox})))
             conn.execute("""INSERT INTO tasks
                 (id,parent_id,identity,prompt,metadata,tier,depth,state,created,updated)
                 VALUES (?,NULL,?,?,?,0,0,'queued',?,?)""",
@@ -423,9 +424,10 @@ async def execute(store: RunStore, task: dict, config: dict, model: str | None,
                 "attempt": task["attempts"], "identity": task["identity"],
                 "prompt": task_prompt(task, config), "schema": RESPONSE_SCHEMA,
             }
-            stdout = await run_process(shlex.split(config["command"]),
-                                       json.dumps(payload, ensure_ascii=False),
-                                       timeout=300, label="Agent command")
+            stdout = await run_agent_command(
+                config["command"], json.dumps(payload, ensure_ascii=False),
+                config.get("sandbox"), task_id=task["id"],
+                lease_token=task["lease_token"], signal=stop)
             reply = json.loads(stdout)
             if isinstance(reply, dict):
                 usage = reply.pop("usage", None)
@@ -458,6 +460,8 @@ async def run_workers(store: RunStore, *, workers: int = 2, tiers: list[str] | N
     if len(tier_names) != workers or any(t not in TIERS for t in tier_names):
         raise ValueError("Provide exactly one valid size tier for each worker.")
     config = store.config()
+    if config.get("sandbox") is not None and shutil.which("docker") is None:
+        raise ValueError("Docker CLI is required for sandboxed command execution.")
     models = models or config.get("models", {})
     if config["limits"].get("max_cost_usd") is not None:
         prices = config["limits"]["prices"]

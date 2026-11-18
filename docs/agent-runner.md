@@ -115,8 +115,7 @@ To delegate, return `{"action":"delegate","result":"","children":[...]}`,
 where each child specifies `identity`, `prompt`, and `metadata` with integer
 `expected_tokens`, `file_bytes`, and `tool_count`. The command is invoked
 again for the parent after the children finish. Keep diagnostics on stderr,
-not stdout. The command is trusted code supplied by the operator, and runs
-with that user's local permissions and environment.
+not stdout. Without an isolation policy, the command runs with the operator's host permissions. For opt-in container isolation, use the CLI flag --sandbox-policy sandbox.json; see docs/sandboxing.md.
 
 **Side effects:** An external command is assumed capable of changes by default.
 Its claim is persisted before invocation. If it fails, times out, or its lease
