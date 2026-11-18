@@ -9,9 +9,53 @@ import signal as signals
 from pathlib import Path
 
 
+async def _bounded_communicate(process: asyncio.subprocess.Process, data: bytes,
+                               limit: int | None) -> tuple[bytes, bytes]:
+    if limit is None:
+        return await process.communicate(data)
+
+    async def write_input() -> None:
+        try:
+            process.stdin.write(data)
+            await process.stdin.drain()
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+        finally:
+            process.stdin.close()
+
+    writer = asyncio.create_task(write_input())
+    chunks = []
+    total = 0
+    exceeded = False
+    try:
+        while True:
+            chunk = await process.stdout.read(65536)
+            if not chunk:
+                break
+            total += len(chunk)
+            if total > limit:
+                if not exceeded and process.returncode is None:
+                    process.kill()
+                exceeded = True
+            if not exceeded:
+                chunks.append(chunk)
+        await writer
+        await process.wait()
+        if exceeded:
+            raise RuntimeError("Process stdout exceeds configured limit.")
+        return b"".join(chunks), b""
+    finally:
+        if not writer.done():
+            writer.cancel()
+        await asyncio.gather(writer, return_exceptions=True)
+
+
 async def run_process(command: list[str], data: str, *, timeout: float,
                       signal: asyncio.Event | None = None, env: dict[str, str] | None = None,
-                      cwd: str | Path | None = None, label: str = "Process") -> str:
+                      cwd: str | Path | None = None, label: str = "Process",
+                      max_output_bytes: int | None = None) -> str:
+    if max_output_bytes is not None and (type(max_output_bytes) is not int or max_output_bytes < 1):
+        raise ValueError("max_output_bytes must be positive.")
     if signal is not None and signal.is_set():
         raise asyncio.CancelledError("Experiment cancelled.")
     try:
@@ -20,7 +64,8 @@ async def run_process(command: list[str], data: str, *, timeout: float,
             stderr=asyncio.subprocess.DEVNULL, env=env, cwd=cwd, start_new_session=os.name == "posix")
     except OSError as error:
         raise RuntimeError(f"Cannot start {label}: {error.__class__.__name__}") from None
-    communication = asyncio.create_task(process.communicate(data.encode()))
+    communication = asyncio.create_task(
+        _bounded_communicate(process, data.encode(), max_output_bytes))
     cancellation = asyncio.create_task(signal.wait()) if signal is not None else None
     try:
         watched = {communication} | ({cancellation} if cancellation else set())

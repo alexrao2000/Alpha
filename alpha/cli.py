@@ -41,6 +41,7 @@ def parser() -> argparse.ArgumentParser:
     orch.add_argument('--db', type=Path, help='SQLite state path (required for resume/status)')
     orch.add_argument('--agents', type=Path, help='Identity JSON with per-agent instructions and skill paths')
     orch.add_argument('--command', dest='agent_command', help='External agent command reading JSON on stdin and writing JSON on stdout')
+    orch.add_argument('--sandbox-policy', type=Path, help='JSON Docker isolation policy for external agent commands')
     orch.add_argument('--read-only-command', action='store_true',
                       help='Assert that the external command cannot have side effects; enables safe retries')
     orch.add_argument('--decision', choices=('done', 'failed', 'retry'), help='Resolution for a needs_review task')
@@ -398,7 +399,9 @@ def main(argv=None) -> int:
                                 for size in ('small', 'medium', 'large')}
                 store.start(args.task, identity, identities, limits,
                             command=args.agent_command, read_only_command=args.read_only_command,
-                            models=model_routes)
+                            models=model_routes,
+                            sandbox_policy=json.loads(args.sandbox_policy.read_text(encoding="utf-8"))
+                            if args.sandbox_policy else None)
             if args.mode == 'depends':
                 if not args.task or not args.prerequisite:
                     raise ValueError('Depends requires a task ID and --prerequisite TASK_ID.')
